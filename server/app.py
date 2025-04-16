@@ -383,37 +383,48 @@ def create_app(config_class=Config):
             db.session.commit()
             return '', 204
     
-    # Single API endpoint to load all user data
-    @app.route('/api/user_data', methods=['GET'])
-    @jwt_required()
-    def get_user_data():
-        current_user_id = get_jwt_identity()
-        user = User.query.get_or_404(current_user_id)
-        
-        # Get all time periods that have expenses or paychecks for this user
-        user_time_periods = set()
-        
-        for expense in user.expenses:
-            user_time_periods.add(expense.time_period)
+    # User Data Resource (single API endpoint for loading all user data efficiently)
+    class UserDataResource(Resource):
+        @jwt_required()
+        def get(self):
+            current_user_id = get_jwt_identity()
+            user = User.query.get_or_404(current_user_id)
             
-        for paycheck in user.paychecks:
-            user_time_periods.add(paycheck.time_period)
-        
-        return jsonify(user_data_schema.dump(user)), 200
+            # Use the UserDataSchema to get all user data in one response
+            return user_data_schema.dump(user), 200
     
-    # Error handlers
-    @app.errorhandler(404)
-    def not_found(error):
-        return jsonify({"error": "Not found"}), 404
+    # Register resources with the API
+    api.add_resource(RegisterResource, '/api/auth/register')
+    api.add_resource(LoginResource, '/api/auth/login')
+    api.add_resource(TokenRefreshResource, '/api/auth/refresh')
     
-    @app.errorhandler(500)
-    def internal_error(error):
-        db.session.rollback()
-        return jsonify({"error": "Internal server error"}), 500
+    # Time Periods - the central organizing principle
+    api.add_resource(TimePeriodListResource, '/api/time_periods')
+    api.add_resource(TimePeriodDetailResource, '/api/time_periods/<int:time_period_id>')
+    
+    # Expense resources (through time periods)
+    api.add_resource(TimePeriodExpenseCollectionResource, 
+                     '/api/time_periods/<int:time_period_id>/expenses',
+                     '/api/time_periods/<string:time_period_id>/expenses')
+    api.add_resource(TimePeriodExpenseDetailResource, 
+                     '/api/time_periods/<int:time_period_id>/expenses/<int:expense_id>')
+    
+    # Paycheck resources (through time periods)
+    api.add_resource(TimePeriodPaycheckCollectionResource, 
+                    '/api/time_periods/<int:time_period_id>/paychecks',
+                    '/api/time_periods/<string:time_period_id>/paychecks')
+    api.add_resource(TimePeriodPaycheckDetailResource, 
+                    '/api/time_periods/<int:time_period_id>/paychecks/<int:paycheck_id>')
+    
+    # Summary route
+    api.add_resource(TimePeriodSummaryResource, '/api/time_periods/<int:time_period_id>/summary')
+    
+    # Single API endpoint for efficient data loading
+    api.add_resource(UserDataResource, '/api/user_data')
     
     return app
 
-# This creates an app instance when file is run directly
+# Create an app instance for direct running and Flask CLI
 app = create_app()
 
 if __name__ == '__main__':
