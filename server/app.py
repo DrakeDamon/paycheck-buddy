@@ -382,7 +382,38 @@ def create_app(config_class=Config):
             db.session.delete(paycheck)
             db.session.commit()
             return '', 204
-    
+
+    # Time Period Summary Resource
+    class TimePeriodSummaryResource(Resource):
+        @jwt_required()
+        def get(self, time_period_id):
+            current_user_id = get_jwt_identity()
+            
+            # Verify the time period exists
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            
+            # Get expenses for this time period and user
+            expenses = Expense.query.filter_by(
+                user_id=current_user_id,
+                time_period_id=time_period_id
+            ).all()
+            
+            # Get paychecks for this time period and user
+            paychecks = Paycheck.query.filter_by(
+                user_id=current_user_id,
+                time_period_id=time_period_id
+            ).all()
+            
+            # Format response with time period and associated data
+            result = {
+                "time_period": time_period_schema.dump(time_period),
+                "expenses": expenses_schema.dump(expenses),
+                "paychecks": paychecks_schema.dump(paychecks)
+            }
+            
+            return result, 200
+
+
     # User Data Resource (single API endpoint for loading all user data efficiently)
     class UserDataResource(Resource):
         @jwt_required()
