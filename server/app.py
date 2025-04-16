@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
 from marshmallow import ValidationError
 from datetime import datetime
@@ -17,13 +18,36 @@ def create_app(config_class=Config):
     
     # Initialize extensions
     db.init_app(app)
+    migrate = Migrate(app, db)  # Add Flask-Migrate
     CORS(app)
     jwt = JWTManager(app)
     
-    # Create database tables
-    with app.app_context():
-        db.create_all()
+    # Database tables will be created by migrations instead of create_all()
+    # Commented out for now - use migrations instead
+    # with app.app_context():
+    #     db.create_all()
     
+    # Add this route to your create_app function, before the return app statement
+    @app.route('/')
+    def index():
+        """List all registered routes with their endpoints and methods."""
+        routes = []
+        for rule in app.url_map.iter_rules():
+            methods = ','.join(sorted(rule.methods - {'OPTIONS', 'HEAD'}))
+            routes.append(f"{rule} [{methods}]")
+        
+        # Sort routes alphabetically
+        routes.sort()
+        
+        response = {
+            "app_name": "PaycheckBuddy API",
+            "description": "A budgeting app that organizes finances by time periods",
+            "version": "1.0.0",
+            "routes": routes,
+            "documentation": "Visit /api-docs for detailed API documentation (if implemented)"
+        }
+        
+        return jsonify(response), 200
     # Authentication routes
     @app.route('/api/auth/register', methods=['POST'])
     def register():
@@ -273,6 +297,8 @@ def create_app(config_class=Config):
     
     return app
 
+# This creates an app instance when file is run directly
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=True, port=5555)
