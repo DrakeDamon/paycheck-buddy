@@ -146,52 +146,71 @@ def create_app(config_class=Config):
                 "access_token": access_token
             }, 200
     
-    # API Routes for TimePeriod
-    @app.route('/api/time_periods', methods=['GET'])
-    @jwt_required()
-    def get_time_periods():
-        time_periods = TimePeriod.query.all()
-        return jsonify(time_periods_schema.dump(time_periods)), 200
-    
-    @app.route('/api/time_periods', methods=['POST'])
-    @jwt_required()
-    def create_time_period():
-        data = request.get_json()
+    # Time Period Resources
+    class TimePeriodListResource(Resource):
+        @jwt_required()
+        def get(self):
+            current_user_id = get_jwt_identity()
+            
+            # Get time periods the user has access to through expenses and paychecks
+            user = User.query.get_or_404(current_user_id)
+            
+            # Use the association proxies we defined in the User model
+            user_time_periods = set()
+            
+            # Get time periods through expenses
+            for expense in user.expenses:
+                user_time_periods.add(expense.time_period)
+                
+            # Get time periods through paychecks
+            for paycheck in user.paychecks:
+                user_time_periods.add(paycheck.time_period)
+            
+            # If no time periods found, return system defined time periods
+            if not user_time_periods:
+                # Get some common time periods
+                time_periods = TimePeriod.query.all()
+                if time_periods:
+                    return time_periods_schema.dump(time_periods), 200
+            
+            return time_periods_schema.dump(list(user_time_periods)), 200
         
-        try:
-            time_period = time_period_schema.load(data)
-            db.session.add(time_period)
-            db.session.commit()
-            return jsonify(time_period_schema.dump(time_period)), 201
-        except ValidationError as err:
-            return jsonify({"error": err.messages}), 400
+        @jwt_required()
+        def post(self):
+            data = request.get_json()
+            
+            try:
+                time_period = time_period_schema.load(data)
+                db.session.add(time_period)
+                db.session.commit()
+                return time_period_schema.dump(time_period), 201
+            except ValidationError as err:
+                return {"error": err.messages}, 400
     
-    @app.route('/api/time_periods/<int:id>', methods=['GET'])
-    @jwt_required()
-    def get_time_period(id):
-        time_period = TimePeriod.query.get_or_404(id)
-        return jsonify(time_period_schema.dump(time_period)), 200
-    
-    @app.route('/api/time_periods/<int:id>', methods=['PUT'])
-    @jwt_required()
-    def update_time_period(id):
-        time_period = TimePeriod.query.get_or_404(id)
-        data = request.get_json()
+    class TimePeriodDetailResource(Resource):
+        @jwt_required()
+        def get(self, time_period_id):
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            return time_period_schema.dump(time_period), 200
         
-        try:
-            updated_time_period = time_period_schema.load(data, instance=time_period, partial=True)
+        @jwt_required()
+        def put(self, time_period_id):
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            data = request.get_json()
+            
+            try:
+                updated_time_period = time_period_schema.load(data, instance=time_period, partial=True)
+                db.session.commit()
+                return time_period_schema.dump(updated_time_period), 200
+            except ValidationError as err:
+                return {"error": err.messages}, 400
+        
+        @jwt_required()
+        def delete(self, time_period_id):
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            db.session.delete(time_period)
             db.session.commit()
-            return jsonify(time_period_schema.dump(updated_time_period)), 200
-        except ValidationError as err:
-            return jsonify({"error": err.messages}), 400
-    
-    @app.route('/api/time_periods/<int:id>', methods=['DELETE'])
-    @jwt_required()
-    def delete_time_period(id):
-        time_period = TimePeriod.query.get_or_404(id)
-        db.session.delete(time_period)
-        db.session.commit()
-        return '', 204
+            return '', 204
     
     # API Routes for Expenses
     @app.route('/api/expenses', methods=['GET'])
