@@ -212,58 +212,91 @@ def create_app(config_class=Config):
             db.session.commit()
             return '', 204
     
-    # API Routes for Expenses
-    @app.route('/api/expenses', methods=['GET'])
-    @jwt_required()
-    def get_expenses():
-        current_user_id = get_jwt_identity()
-        expenses = Expense.query.filter_by(user_id=current_user_id).all()
-        return jsonify(expenses_schema.dump(expenses)), 200
-    
-    @app.route('/api/expenses', methods=['POST'])
-    @jwt_required()
-    def create_expense():
-        current_user_id = get_jwt_identity()
-        data = request.get_json()
-        data['user_id'] = current_user_id
+    # Time Period Expenses Resources
+    class TimePeriodExpenseCollectionResource(Resource):
+        @jwt_required()
+        def get(self, time_period_id):
+            current_user_id = get_jwt_identity()
+            
+            # Handle special 'all' case to get expenses across all time periods
+            if time_period_id == 'all':
+                expenses = Expense.query.filter_by(user_id=current_user_id).all()
+                return expenses_schema.dump(expenses), 200
+            
+            # Get expenses for a specific time period
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            expenses = Expense.query.filter_by(
+                user_id=current_user_id,
+                time_period_id=time_period_id
+            ).all()
+            
+            return expenses_schema.dump(expenses), 200
         
-        try:
-            expense = expense_schema.load(data)
-            db.session.add(expense)
-            db.session.commit()
-            return jsonify(expense_schema.dump(expense)), 201
-        except ValidationError as err:
-            return jsonify({"error": err.messages}), 400
+        @jwt_required()
+        def post(self, time_period_id):
+            current_user_id = get_jwt_identity()
+            
+            # Can't post to 'all'
+            if time_period_id == 'all':
+                return {"error": "Cannot create an expense without specifying a time period"}, 400
+            
+            data = request.get_json()
+            
+            # Verify the time period exists
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            
+            # Set the time_period_id and user_id
+            data['time_period_id'] = time_period_id
+            data['user_id'] = current_user_id
+            
+            try:
+                expense = expense_schema.load(data)
+                db.session.add(expense)
+                db.session.commit()
+                return expense_schema.dump(expense), 201
+            except ValidationError as err:
+                return {"error": err.messages}, 400
     
-    @app.route('/api/expenses/<int:id>', methods=['GET'])
-    @jwt_required()
-    def get_expense(id):
-        current_user_id = get_jwt_identity()
-        expense = Expense.query.filter_by(id=id, user_id=current_user_id).first_or_404()
-        return jsonify(expense_schema.dump(expense)), 200
-    
-    @app.route('/api/expenses/<int:id>', methods=['PUT'])
-    @jwt_required()
-    def update_expense(id):
-        current_user_id = get_jwt_identity()
-        expense = Expense.query.filter_by(id=id, user_id=current_user_id).first_or_404()
-        data = request.get_json()
+    class TimePeriodExpenseDetailResource(Resource):
+        @jwt_required()
+        def get(self, time_period_id, expense_id):
+            current_user_id = get_jwt_identity()
+            expense = Expense.query.filter_by(
+                id=expense_id,
+                time_period_id=time_period_id,
+                user_id=current_user_id
+            ).first_or_404()
+            return expense_schema.dump(expense), 200
         
-        try:
-            updated_expense = expense_schema.load(data, instance=expense, partial=True)
+        @jwt_required()
+        def put(self, time_period_id, expense_id):
+            current_user_id = get_jwt_identity()
+            expense = Expense.query.filter_by(
+                id=expense_id,
+                time_period_id=time_period_id,
+                user_id=current_user_id
+            ).first_or_404()
+            data = request.get_json()
+            
+            try:
+                updated_expense = expense_schema.load(data, instance=expense, partial=True)
+                db.session.commit()
+                return expense_schema.dump(updated_expense), 200
+            except ValidationError as err:
+                return {"error": err.messages}, 400
+        
+        @jwt_required()
+        def delete(self, time_period_id, expense_id):
+            current_user_id = get_jwt_identity()
+            expense = Expense.query.filter_by(
+                id=expense_id,
+                time_period_id=time_period_id,
+                user_id=current_user_id
+            ).first_or_404()
+            db.session.delete(expense)
             db.session.commit()
-            return jsonify(expense_schema.dump(updated_expense)), 200
-        except ValidationError as err:
-            return jsonify({"error": err.messages}), 400
+            return '', 204
     
-    @app.route('/api/expenses/<int:id>', methods=['DELETE'])
-    @jwt_required()
-    def delete_expense(id):
-        current_user_id = get_jwt_identity()
-        expense = Expense.query.filter_by(id=id, user_id=current_user_id).first_or_404()
-        db.session.delete(expense)
-        db.session.commit()
-        return '', 204
     
     # API Routes for Paychecks
     @app.route('/api/paychecks', methods=['GET'])
