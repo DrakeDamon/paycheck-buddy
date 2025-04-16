@@ -18,35 +18,54 @@ def create_app(config_class=Config):
     
     # Initialize extensions
     db.init_app(app)
-    migrate = Migrate(app, db)  # Add Flask-Migrate
+    migrate = Migrate(app, db)
     CORS(app)
     jwt = JWTManager(app)
     
-    # Database tables will be created by migrations instead of create_all()
-    # Commented out for now - use migrations instead
-    # with app.app_context():
-    #     db.create_all()
+    # Initialize Flask-RESTful
+    api = Api(app)
     
-    # Add this route to your create_app function, before the return app statement
+     # Home route to document available endpoints
     @app.route('/')
-    def index():
-        """List all registered routes with their endpoints and methods."""
-        routes = []
-        for rule in app.url_map.iter_rules():
-            methods = ','.join(sorted(rule.methods - {'OPTIONS', 'HEAD'}))
-            routes.append(f"{rule} [{methods}]")
-        
-        # Sort routes alphabetically
-        routes.sort()
-        
-        response = {
-            "app_name": "PaycheckBuddy API",
-            "description": "A budgeting app that organizes finances by time periods",
-            "version": "1.0.0",
-            "routes": routes,
-            "documentation": "Visit /api-docs for detailed API documentation (if implemented)"
-        }
-        
+    def home():
+        return jsonify({
+            
+            "endpoints": {
+                # Authentication endpoints
+                "POST /api/auth/register": "Register a new user",
+                "POST /api/auth/login": "Login and get access token",
+                "POST /api/auth/refresh": "Refresh access token",
+                
+                # Time Period endpoints (central organizing principle)
+                "GET /api/time_periods": "Get all time periods for current user",
+                "POST /api/time_periods": "Create a new time period",
+                "GET /api/time_periods/:id": "Get a specific time period",
+                "PUT /api/time_periods/:id": "Update a time period",
+                "DELETE /api/time_periods/:id": "Delete a time period",
+                
+                # Expense endpoints through time periods
+                "GET /api/time_periods/:id/expenses": "Get all expenses for a time period",
+                "POST /api/time_periods/:id/expenses": "Add an expense to a time period",
+                "GET /api/time_periods/:id/expenses/:expense_id": "Get specific expense in a time period",
+                "PUT /api/time_periods/:id/expenses/:expense_id": "Update specific expense in a time period",
+                "DELETE /api/time_periods/:id/expenses/:expense_id": "Delete specific expense in a time period",
+                "GET /api/time_periods/all/expenses": "Get all expenses across all time periods",
+                
+                # Paycheck endpoints through time periods
+                "GET /api/time_periods/:id/paychecks": "Get all paychecks for a time period",
+                "POST /api/time_periods/:id/paychecks": "Add a paycheck to a time period",
+                "GET /api/time_periods/:id/paychecks/:paycheck_id": "Get specific paycheck in a time period",
+                "PUT /api/time_periods/:id/paychecks/:paycheck_id": "Update specific paycheck in a time period",
+                "DELETE /api/time_periods/:id/paychecks/:paycheck_id": "Delete specific paycheck in a time period",
+                "GET /api/time_periods/all/paychecks": "Get all paychecks across all time periods",
+                
+                # Summary endpoint
+                "GET /api/time_periods/:id/summary": "Get income vs. expenses summary for a time period",
+                
+                # User Data endpoint
+                "GET /api/user_data": "Get all user data in a single request (efficient loading)"
+            }
+        })
         return jsonify(response), 200
     # Authentication routes
     @app.route('/api/auth/register', methods=['POST'])
