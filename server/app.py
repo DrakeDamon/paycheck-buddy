@@ -67,37 +67,50 @@ def create_app(config_class=Config):
             }
         })
         return jsonify(response), 200
-    # Authentication routes
-    @app.route('/api/auth/register', methods=['POST'])
-    def register():
-        data = request.get_json()
-        
-        # Validate input
-        if not data or not data.get('username') or not data.get('password'):
-            return jsonify({"error": "Username and password are required"}), 400
-        
-        try:
-            user = User(username=data['username'])
-            user.password = data['password']
-            db.session.add(user)
-            db.session.commit()
+    
+
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Resource not found"}), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        return jsonify({"error": "Internal server error"}), 500
+
+
+
+    class RegisterResource(Resource):
+        def post(self):
+            data = request.get_json()
             
-            # Create tokens
-            access_token = create_access_token(identity=str(user.id))
-            refresh_token = create_refresh_token(identity=str(user.id))
+            # Validate input
+            if not data or not data.get('username') or not data.get('password'):
+                return {"error": "Username and password are required"}, 400
             
-            return jsonify({
-                "message": "User created successfully",
-                "user": user_schema.dump(user),
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            }), 201
-        except IntegrityError:
-            db.session.rollback()
-            return jsonify({"error": "Username already exists"}), 409
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": str(e)}), 500
+            try:
+                user = User(username=data['username'])
+                user.password = data['password']
+                db.session.add(user)
+                db.session.commit()
+                
+                # Create tokens
+                access_token = create_access_token(identity=str(user.id))
+                refresh_token = create_refresh_token(identity=str(user.id))
+                
+                return {
+                    "message": "User created successfully",
+                    "user": user_schema.dump(user),
+                    "access_token": access_token,
+                    "refresh_token": refresh_token
+                }, 201
+            except IntegrityError:
+                db.session.rollback()
+                return {"error": "Username already exists"}, 409
+            except Exception as e:
+                db.session.rollback()
+                return {"error": str(e)}, 500
     
     @app.route('/api/auth/login', methods=['POST'])
     def login():
