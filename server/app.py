@@ -112,39 +112,39 @@ def create_app(config_class=Config):
                 db.session.rollback()
                 return {"error": str(e)}, 500
     
-    @app.route('/api/auth/login', methods=['POST'])
-    def login():
-        data = request.get_json()
-        
-        # Validate input
-        if not data or not data.get('username') or not data.get('password'):
-            return jsonify({"error": "Username and password are required"}), 400
-        
-        user = User.query.filter_by(username=data['username']).first()
-        
-        if user and user.verify_password(data['password']):
-            # Create tokens
-            access_token = create_access_token(identity=str(user.id))
-            refresh_token = create_refresh_token(identity=str(user.id))
+    class LoginResource(Resource):
+        def post(self):
+            data = request.get_json()
             
-            return jsonify({
-                "message": "Login successful",
-                "user": user_schema.dump(user),
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            }), 200
-        
-        return jsonify({"error": "Invalid username or password"}), 401
+            # Validate input
+            if not data or not data.get('username') or not data.get('password'):
+                return {"error": "Username and password are required"}, 400
+            
+            user = User.query.filter_by(username=data['username']).first()
+            
+            if user and user.verify_password(data['password']):
+                # Create tokens
+                access_token = create_access_token(identity=str(user.id))
+                refresh_token = create_refresh_token(identity=str(user.id))
+                
+                return {
+                    "message": "Login successful",
+                    "user": user_schema.dump(user),
+                    "access_token": access_token,
+                    "refresh_token": refresh_token
+                }, 200
+            
+            return {"error": "Invalid username or password"}, 401
     
-    @app.route('/api/auth/refresh', methods=['POST'])
-    @jwt_required(refresh=True)
-    def refresh_token():
-        current_user_id = get_jwt_identity()
-        access_token = create_access_token(identity=str(current_user_id))
-        
-        return jsonify({
-            "access_token": access_token
-        }), 200
+    class TokenRefreshResource(Resource):
+        @jwt_required(refresh=True)
+        def post(self):
+            current_user_id = get_jwt_identity()
+            access_token = create_access_token(identity=str(current_user_id))
+            
+            return {
+                "access_token": access_token
+            }, 200
     
     # API Routes for TimePeriod
     @app.route('/api/time_periods', methods=['GET'])
