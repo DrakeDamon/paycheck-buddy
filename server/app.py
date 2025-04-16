@@ -298,58 +298,90 @@ def create_app(config_class=Config):
             return '', 204
     
     
-    # API Routes for Paychecks
-    @app.route('/api/paychecks', methods=['GET'])
-    @jwt_required()
-    def get_paychecks():
-        current_user_id = get_jwt_identity()
-        paychecks = Paycheck.query.filter_by(user_id=current_user_id).all()
-        return jsonify(paychecks_schema.dump(paychecks)), 200
-    
-    @app.route('/api/paychecks', methods=['POST'])
-    @jwt_required()
-    def create_paycheck():
-        current_user_id = get_jwt_identity()
-        data = request.get_json()
-        data['user_id'] = current_user_id
+     # Time Period Paychecks Resources
+    class TimePeriodPaycheckCollectionResource(Resource):
+        @jwt_required()
+        def get(self, time_period_id):
+            current_user_id = get_jwt_identity()
+            
+            # Handle special 'all' case to get paychecks across all time periods
+            if time_period_id == 'all':
+                paychecks = Paycheck.query.filter_by(user_id=current_user_id).all()
+                return paychecks_schema.dump(paychecks), 200
+            
+            # Get paychecks for a specific time period
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            paychecks = Paycheck.query.filter_by(
+                user_id=current_user_id,
+                time_period_id=time_period_id
+            ).all()
+            
+            return paychecks_schema.dump(paychecks), 200
         
-        try:
-            paycheck = paycheck_schema.load(data)
-            db.session.add(paycheck)
-            db.session.commit()
-            return jsonify(paycheck_schema.dump(paycheck)), 201
-        except ValidationError as err:
-            return jsonify({"error": err.messages}), 400
+        @jwt_required()
+        def post(self, time_period_id):
+            current_user_id = get_jwt_identity()
+            
+            # Can't post to 'all'
+            if time_period_id == 'all':
+                return {"error": "Cannot create a paycheck without specifying a time period"}, 400
+            
+            data = request.get_json()
+            
+            # Verify the time period exists
+            time_period = TimePeriod.query.get_or_404(time_period_id)
+            
+            # Set the time_period_id and user_id
+            data['time_period_id'] = time_period_id
+            data['user_id'] = current_user_id
+            
+            try:
+                paycheck = paycheck_schema.load(data)
+                db.session.add(paycheck)
+                db.session.commit()
+                return paycheck_schema.dump(paycheck), 201
+            except ValidationError as err:
+                return {"error": err.messages}, 400
     
-    @app.route('/api/paychecks/<int:id>', methods=['GET'])
-    @jwt_required()
-    def get_paycheck(id):
-        current_user_id = get_jwt_identity()
-        paycheck = Paycheck.query.filter_by(id=id, user_id=current_user_id).first_or_404()
-        return jsonify(paycheck_schema.dump(paycheck)), 200
-    
-    @app.route('/api/paychecks/<int:id>', methods=['PUT'])
-    @jwt_required()
-    def update_paycheck(id):
-        current_user_id = get_jwt_identity()
-        paycheck = Paycheck.query.filter_by(id=id, user_id=current_user_id).first_or_404()
-        data = request.get_json()
+    class TimePeriodPaycheckDetailResource(Resource):
+        @jwt_required()
+        def get(self, time_period_id, paycheck_id):
+            current_user_id = get_jwt_identity()
+            paycheck = Paycheck.query.filter_by(
+                id=paycheck_id,
+                time_period_id=time_period_id,
+                user_id=current_user_id
+            ).first_or_404()
+            return paycheck_schema.dump(paycheck), 200
         
-        try:
-            updated_paycheck = paycheck_schema.load(data, instance=paycheck, partial=True)
+        @jwt_required()
+        def put(self, time_period_id, paycheck_id):
+            current_user_id = get_jwt_identity()
+            paycheck = Paycheck.query.filter_by(
+                id=paycheck_id,
+                time_period_id=time_period_id,
+                user_id=current_user_id
+            ).first_or_404()
+            data = request.get_json()
+            
+            try:
+                updated_paycheck = paycheck_schema.load(data, instance=paycheck, partial=True)
+                db.session.commit()
+                return paycheck_schema.dump(updated_paycheck), 200
+            except ValidationError as err:
+                return {"error": err.messages}, 400
+        
+        @jwt_required()
+        def delete(self, time_period_id, paycheck_id):
+            current_user_id = get_jwt_identity()
+            paycheck = Paycheck.query.filter_by(
+                id=paycheck_id,
+                time_period_id=time_period_id,
+                user_id=current_user_id
+            ).first_or_404()
+            db.session.delete(paycheck)
             db.session.commit()
-            return jsonify(paycheck_schema.dump(updated_paycheck)), 200
-        except ValidationError as err:
-            return jsonify({"error": err.messages}), 400
-    
-    @app.route('/api/paychecks/<int:id>', methods=['DELETE'])
-    @jwt_required()
-    def delete_paycheck(id):
-        current_user_id = get_jwt_identity()
-        paycheck = Paycheck.query.filter_by(id=id, user_id=current_user_id).first_or_404()
-        db.session.delete(paycheck)
-        db.session.commit()
-        return '', 204
+            return '', 204
     
     # Single API endpoint to load all user data
     @app.route('/api/user_data', methods=['GET'])
