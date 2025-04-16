@@ -1,70 +1,81 @@
-# Getting Started with Create React App
+# PaycheckBuddy Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the React frontend for the PaycheckBuddy application.
+
+## Features
+
+- User authentication (login/register)
+- View and manage time periods
+- Track expenses and paychecks
+- Visualize income vs expenses
+- Responsive design for all devices
+
+## Tech Stack
+
+- React
+- React Router for navigation
+- Context API for state management
+- Axios for API calls
+- Chart.js for data visualization
+- Tailwind CSS for styling
+
+## Project Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   ├── auth/           # Authentication related components
+│   ├── dashboard/      # Dashboard components
+│   ├── expenses/       # Expense management components
+│   ├── paychecks/      # Paycheck management components
+│   ├── time-periods/   # Time period components
+│   └── ui/             # Shared UI components
+├── context/            # React Context for state management
+├── hooks/              # Custom React hooks
+├── pages/              # Page components
+├── services/           # API service functions
+├── utils/              # Utility functions
+├── App.js              # Main app component
+└── index.js            # Entry point
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 14+ installed
+- PaycheckBuddy backend running
+
+### Installation
+
+1. Install dependencies:
+
+   ```
+   npm install
+   ```
+
+2. Start the development server:
+
+   ```
+   npm start
+   ```
+
+3. Build for production:
+   ```
+   npm run build
+   ```
 
 ## Available Scripts
 
-In the project directory, you can run:
+- `npm start`: Start the development server
+- `npm test`: Run tests
+- `npm run build`: Build for production
+- `npm run eject`: Eject from Create React App
 
-### `npm start`
+## Development Guidelines
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Follow the component structure outlined above
+- Use functional components with hooks
+- Use the Context API for state management
+- Use the API service functions for all backend communication
+- Follow the BEM methodology for CSS class naming
