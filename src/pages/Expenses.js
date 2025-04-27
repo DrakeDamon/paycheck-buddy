@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
 import '../styles/Expenses.css';
 
 const Expenses = () => {
   const { id } = useParams(); // time_period_id from URL if present
+  const navigate = useNavigate();
   const { 
     expenses, 
     timePeriods, 
@@ -27,6 +28,17 @@ const Expenses = () => {
     currency: 'USD'
   });
   const [formError, setFormError] = useState('');
+  const [currentTimePeriod, setCurrentTimePeriod] = useState(null);
+  
+  // Get current time period if id is provided
+  useEffect(() => {
+    if (id && timePeriods.length > 0) {
+      const period = timePeriods.find(p => p.id === parseInt(id));
+      setCurrentTimePeriod(period || null);
+    } else {
+      setCurrentTimePeriod(null);
+    }
+  }, [id, timePeriods]);
   
   // Filter expenses by time period if id is provided
   useEffect(() => {
@@ -106,15 +118,6 @@ const Expenses = () => {
     }
   };
   
-  // Find time period name if id is provided
-  const getTimePeriodName = () => {
-    if (id) {
-      const timePeriod = timePeriods.find(period => period.id === parseInt(id));
-      return timePeriod ? timePeriod.name : 'Unknown Time Period';
-    }
-    return 'All Time Periods';
-  };
-  
   if (loading) {
     return <div className="loading">Loading expenses...</div>;
   }
@@ -123,11 +126,20 @@ const Expenses = () => {
     <div className="expenses-page">
       <header className="page-header">
         <div className="header-content">
-          <h1>Expenses: {getTimePeriodName()}</h1>
-          {id && (
-            <Link to="/expenses" className="view-all-link">
-              View All Expenses
-            </Link>
+          {id ? (
+            <>
+              <h1>Expenses for: {currentTimePeriod?.name || 'Unknown Time Period'}</h1>
+              <div className="header-actions">
+                <Link to="/time-periods" className="secondary-button">
+                  Back to Time Periods
+                </Link>
+                <Link to="/expenses" className="secondary-button">
+                  All Expenses
+                </Link>
+              </div>
+            </>
+          ) : (
+            <h1>All Expenses</h1>
           )}
         </div>
         
@@ -142,6 +154,10 @@ const Expenses = () => {
       </header>
       
       {error && <div className="error-message">{error}</div>}
+      
+      {id && !currentTimePeriod && (
+        <div className="error-message">Time period not found. <Link to="/time-periods">Return to Time Periods</Link></div>
+      )}
       
       {id && showForm && (
         <div className="form-container">
@@ -266,6 +282,23 @@ const Expenses = () => {
         </div>
       )}
       
+      {!id && timePeriods.length > 0 && (
+        <div className="time-period-selector">
+          <h2>Select a Time Period to Add Expenses</h2>
+          <div className="time-period-cards">
+            {timePeriods.map(period => (
+              <div key={period.id} className="time-period-select-card">
+                <h3>{period.name}</h3>
+                <span className="period-type">{period.type}</span>
+                <Link to={`/time-periods/${period.id}/expenses`} className="select-button">
+                  View & Add Expenses
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {filteredExpenses.length > 0 ? (
         <div className="expenses-list">
           <table className="expenses-table">
@@ -303,7 +336,13 @@ const Expenses = () => {
                         ? `Yes (${expense.recurrence_interval || 'not specified'})` 
                         : 'No'}
                     </td>
-                    {!id && <td>{timePeriodName}</td>}
+                    {!id && (
+                      <td>
+                        <Link to={`/time-periods/${expense.time_period_id}/expenses`}>
+                          {timePeriodName}
+                        </Link>
+                      </td>
+                    )}
                     <td>
                       <button 
                         className="delete-button"
@@ -320,14 +359,18 @@ const Expenses = () => {
         </div>
       ) : (
         <div className="no-data">
-          <p>No expenses found. {id && 'Create your first expense for this time period!'}</p>
-          {id && (
-            <button
-              className="add-button"
-              onClick={() => setShowForm(true)}
-            >
-              Add Expense
-            </button>
+          {id ? (
+            <>
+              <p>No expenses found for this time period.</p>
+              <button
+                className="add-button"
+                onClick={() => setShowForm(true)}
+              >
+                Add Expense
+              </button>
+            </>
+          ) : (
+            <p>No expenses found. Select a time period to add expenses.</p>
           )}
         </div>
       )}

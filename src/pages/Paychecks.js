@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
 import '../styles/Paychecks.css';
 
 const Paychecks = () => {
   const { id } = useParams(); // time_period_id from URL if present
+  const navigate = useNavigate();
   const { 
     paychecks, 
     timePeriods, 
@@ -23,6 +24,17 @@ const Paychecks = () => {
     currency: 'USD'
   });
   const [formError, setFormError] = useState('');
+  const [currentTimePeriod, setCurrentTimePeriod] = useState(null);
+  
+  // Get current time period if id is provided
+  useEffect(() => {
+    if (id && timePeriods.length > 0) {
+      const period = timePeriods.find(p => p.id === parseInt(id));
+      setCurrentTimePeriod(period || null);
+    } else {
+      setCurrentTimePeriod(null);
+    }
+  }, [id, timePeriods]);
   
   // Filter paychecks by time period if id is provided
   useEffect(() => {
@@ -97,15 +109,6 @@ const Paychecks = () => {
     }
   };
   
-  // Find time period name if id is provided
-  const getTimePeriodName = () => {
-    if (id) {
-      const timePeriod = timePeriods.find(period => period.id === parseInt(id));
-      return timePeriod ? timePeriod.name : 'Unknown Time Period';
-    }
-    return 'All Time Periods';
-  };
-  
   if (loading) {
     return <div className="loading">Loading paychecks...</div>;
   }
@@ -114,11 +117,20 @@ const Paychecks = () => {
     <div className="paychecks-page">
       <header className="page-header">
         <div className="header-content">
-          <h1>Paychecks: {getTimePeriodName()}</h1>
-          {id && (
-            <Link to="/paychecks" className="view-all-link">
-              View All Paychecks
-            </Link>
+          {id ? (
+            <>
+              <h1>Paychecks for: {currentTimePeriod?.name || 'Unknown Time Period'}</h1>
+              <div className="header-actions">
+                <Link to="/time-periods" className="secondary-button">
+                  Back to Time Periods
+                </Link>
+                <Link to="/paychecks" className="secondary-button">
+                  All Paychecks
+                </Link>
+              </div>
+            </>
+          ) : (
+            <h1>All Paychecks</h1>
           )}
         </div>
         
@@ -133,6 +145,10 @@ const Paychecks = () => {
       </header>
       
       {error && <div className="error-message">{error}</div>}
+      
+      {id && !currentTimePeriod && (
+        <div className="error-message">Time period not found. <Link to="/time-periods">Return to Time Periods</Link></div>
+      )}
       
       {id && showForm && (
         <div className="form-container">
@@ -190,6 +206,23 @@ const Paychecks = () => {
         </div>
       )}
       
+      {!id && timePeriods.length > 0 && (
+        <div className="time-period-selector">
+          <h2>Select a Time Period to Add Paychecks</h2>
+          <div className="time-period-cards">
+            {timePeriods.map(period => (
+              <div key={period.id} className="time-period-select-card">
+                <h3>{period.name}</h3>
+                <span className="period-type">{period.type}</span>
+                <Link to={`/time-periods/${period.id}/paychecks`} className="select-button">
+                  View & Add Paychecks
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {filteredPaychecks.length > 0 ? (
         <div className="paychecks-list">
           <table className="paychecks-table">
@@ -219,7 +252,13 @@ const Paychecks = () => {
                         : 'N/A'}
                     </td>
                     <td>{paycheck.currency}</td>
-                    {!id && <td>{timePeriodName}</td>}
+                    {!id && (
+                      <td>
+                        <Link to={`/time-periods/${paycheck.time_period_id}/paychecks`}>
+                          {timePeriodName}
+                        </Link>
+                      </td>
+                    )}
                     <td>
                       <button 
                         className="delete-button"
@@ -236,14 +275,18 @@ const Paychecks = () => {
         </div>
       ) : (
         <div className="no-data">
-          <p>No paychecks found. {id && 'Add your first paycheck for this time period!'}</p>
-          {id && (
-            <button
-              className="add-button"
-              onClick={() => setShowForm(true)}
-            >
-              Add Paycheck
-            </button>
+          {id ? (
+            <>
+              <p>No paychecks found for this time period.</p>
+              <button
+                className="add-button"
+                onClick={() => setShowForm(true)}
+              >
+                Add Paycheck
+              </button>
+            </>
+          ) : (
+            <p>No paychecks found. Select a time period to add paychecks.</p>
           )}
         </div>
       )}

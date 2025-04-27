@@ -10,7 +10,9 @@ const TimePeriods = () => {
     error, 
     createTimePeriod, 
     deleteTimePeriod,
-    calculateTimePeriodBalance
+    calculateTimePeriodBalance,
+    getExpensesByTimePeriod,
+    getPaychecksByTimePeriod
   } = useContext(DataContext);
   
   const [showForm, setShowForm] = useState(false);
@@ -118,6 +120,9 @@ const TimePeriods = () => {
         <div className="time-periods-grid">
           {timePeriods.map(period => {
             const balance = calculateTimePeriodBalance(period.id);
+            const expenseCount = getExpensesByTimePeriod(period.id).length;
+            const paycheckCount = getPaychecksByTimePeriod(period.id).length;
+            
             return (
               <div key={period.id} className="time-period-card">
                 <div className="card-header">
@@ -142,17 +147,25 @@ const TimePeriods = () => {
                       </span>
                     </div>
                   </div>
+                  
+                  <div className="stats">
+                    <div className="stat-item">
+                      <span className="stat-value">{paycheckCount}</span>
+                      <span className="stat-label">Paychecks</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-value">{expenseCount}</span>
+                      <span className="stat-label">Expenses</span>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="card-actions">
-                  <Link to={`/time-periods/${period.id}`} className="view-button">
-                    View Details
+                  <Link to={`/time-periods/${period.id}/paychecks`} className="paychecks-button">
+                    Manage Paychecks
                   </Link>
                   <Link to={`/time-periods/${period.id}/expenses`} className="expenses-button">
-                    Expenses
-                  </Link>
-                  <Link to={`/time-periods/${period.id}/paychecks`} className="paychecks-button">
-                    Paychecks
+                    Manage Expenses
                   </Link>
                   <button 
                     className="delete-button"
@@ -176,6 +189,14 @@ const TimePeriods = () => {
           </button>
         </div>
       )}
+      
+      <div className="info-box">
+        <h3>How PaycheckBuddy Works</h3>
+        <p>
+          First, create time periods that match your financial cycles (bi-monthly, monthly, yearly). Time periods should match your income cycle. Name them according to when you receive paychecks.
+          Then add your paychecks and expenses to each time period to see if your income covers your expenses.
+        </p>
+      </div>
     </div>
   );
 };
