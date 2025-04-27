@@ -4,14 +4,14 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 
 // Layout
-// import Layout from './components/Layout/Layout';
+import Layout from './components/Layout';
 
 // Auth Pages
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 
 // Main Pages
-import Dashboard from './pages//Dashboard';
+import Dashboard from './pages/Dashboard';
 // import TimePeriods from './pages/TimePeriods/TimePeriods';
 // import TimePeriodDetail from './pages/TimePeriods/TimePeriodDetail';
 // import Expenses from './pages/Expenses/Expenses';
@@ -31,8 +31,8 @@ const ProtectedLayout = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Render the layout with outlet for nested routes if authenticated
-  // return <Layout />;
+  // Since Layout component is not available yet, just render the Outlet directly
+  return <Layout />;
 };
 
 function App() {
