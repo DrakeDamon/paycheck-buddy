@@ -12,7 +12,7 @@ import Register from './Auth/Register';
 
 // Main Pages
 import Dashboard from './pages/Dashboard';
-// import TimePeriods from './pages/TimePeriods/TimePeriods';
+import TimePeriods from './pages/TimePeriods';
 // import TimePeriodDetail from './pages/TimePeriods/TimePeriodDetail';
 // import Expenses from './pages/Expenses/Expenses';
 // import Paychecks from './pages/Paychecks/Paychecks';
@@ -48,7 +48,7 @@ function App() {
             {/* Protected App Routes */}
             <Route path="/" element={<ProtectedLayout />}>
               <Route index element={<Dashboard />} />
-              {/* <Route path="time-periods" element={<TimePeriods />} /> */}
+              <Route path="time-periods" element={<TimePeriods />} />
               {/* <Route path="time-periods/:id" element={<TimePeriodDetail />} /> */}
               {/* <Route path="time-periods/:id/expenses" element={<Expenses />} /> */}
               {/* <Route path="time-periods/:id/paychecks" element={<Paychecks />} /> */}

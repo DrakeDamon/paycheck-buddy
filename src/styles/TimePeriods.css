@@ -1,0 +1,280 @@
+.time-periods-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.add-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-button:hover {
+  background-color: #27ae60;
+}
+
+.form-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.form-error {
+  background-color: #fceaea;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.time-period-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.submit-button {
+  grid-column: span 2;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+  background-color: #2980b9;
+}
+
+.time-periods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.time-period-card {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  padding: 1.25rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #2c3e50;
+}
+
+.period-type {
+  background-color: #e9ecef;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: #495057;
+  text-transform: capitalize;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.balance-info {
+  margin-bottom: 1rem;
+}
+
+.balance-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.balance-item:last-child {
+  margin-bottom: 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+  font-weight: 500;
+}
+
+.balance-item .label {
+  color: #7f8c8d;
+}
+
+.balance-item .value {
+  font-weight: 500;
+}
+
+.balance-item .value.positive {
+  color: #2ecc71;
+}
+
+.balance-item .value.negative {
+  color: #e74c3c;
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+}
+
+.view-button,
+.expenses-button,
+.paychecks-button,
+.delete-button {
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  grid-column: span 2;
+}
+
+.view-button {
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+}
+
+.view-button:hover {
+  background-color: #2980b9;
+}
+
+.expenses-button {
+  background-color: #f39c12;
+  color: white;
+  text-decoration: none;
+}
+
+.expenses-button:hover {
+  background-color: #d35400;
+}
+
+.paychecks-button {
+  background-color: #2ecc71;
+  color: white;
+  text-decoration: none;
+}
+
+.paychecks-button:hover {
+  background-color: #27ae60;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+}
+
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+.no-data {
+  background-color: white;
+  border-radius: 8px;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.no-data p {
+  margin-bottom: 1.5rem;
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  background-color: #fceaea;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+  .time-period-form {
+    grid-template-columns: 1fr;
+  }
+
+  .submit-button {
+    grid-column: span 1;
+  }
+
+  .time-periods-grid {
+    grid-template-columns: 1fr;
+  }
+}
