@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { DataContext } from '../../context/DataContext';
-import '../../styles/Expenses.css';
+import { DataContext } from '../context/DataContext';
+import '../styles/Expenses.css';
 
 const Expenses = () => {
   const { id } = useParams(); // time_period_id from URL if present

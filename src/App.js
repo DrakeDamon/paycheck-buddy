@@ -14,8 +14,8 @@ import Register from './Auth/Register';
 import Dashboard from './pages/Dashboard';
 import TimePeriods from './pages/TimePeriods';
 // import TimePeriodDetail from './pages/TimePeriods/TimePeriodDetail';
-// import Expenses from './pages/Expenses/Expenses';
-// import Paychecks from './pages/Paychecks/Paychecks';
+import Expenses from './pages/Expenses';
+import Paychecks from './pages/Paychecks';
 
 // Protected Route component implemented inline
 const ProtectedLayout = () => {
@@ -52,8 +52,8 @@ function App() {
               {/* <Route path="time-periods/:id" element={<TimePeriodDetail />} /> */}
               {/* <Route path="time-periods/:id/expenses" element={<Expenses />} /> */}
               {/* <Route path="time-periods/:id/paychecks" element={<Paychecks />} /> */}
-              {/* <Route path="expenses" element={<Expenses />} /> */}
-              {/* <Route path="paychecks" element={<Paychecks />} /> */}
+              <Route path="expenses" element={<Expenses />} />
+              <Route path="paychecks" element={<Paychecks />} />
             </Route>
             
             {/* Redirect any unknown routes to Dashboard */}
