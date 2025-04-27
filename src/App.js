@@ -1,21 +1,21 @@
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthProvider, AuthContext } from './contexts/AuthContext';
-import { DataProvider } from './contexts/DataContext';
+import { AuthProvider, AuthContext } from './context/AuthContext';
+import { DataProvider } from './context/DataContext';
 
 // Layout
-import Layout from './components/Layout/Layout';
+// import Layout from './components/Layout/Layout';
 
 // Auth Pages
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
+import Login from './Auth/Login';
+import Register from './Auth/Register';
 
 // Main Pages
-import Dashboard from './pages/Dashboard/Dashboard';
-import TimePeriods from './pages/TimePeriods/TimePeriods';
-import TimePeriodDetail from './pages/TimePeriods/TimePeriodDetail';
-import Expenses from './pages/Expenses/Expenses';
-import Paychecks from './pages/Paychecks/Paychecks';
+import Dashboard from './pages//Dashboard';
+// import TimePeriods from './pages/TimePeriods/TimePeriods';
+// import TimePeriodDetail from './pages/TimePeriods/TimePeriodDetail';
+// import Expenses from './pages/Expenses/Expenses';
+// import Paychecks from './pages/Paychecks/Paychecks';
 
 // Protected Route component implemented inline
 const ProtectedLayout = () => {
@@ -32,7 +32,7 @@ const ProtectedLayout = () => {
   }
 
   // Render the layout with outlet for nested routes if authenticated
-  return <Layout />;
+  // return <Layout />;
 };
 
 function App() {
@@ -48,12 +48,12 @@ function App() {
             {/* Protected App Routes */}
             <Route path="/" element={<ProtectedLayout />}>
               <Route index element={<Dashboard />} />
-              <Route path="time-periods" element={<TimePeriods />} />
-              <Route path="time-periods/:id" element={<TimePeriodDetail />} />
-              <Route path="time-periods/:id/expenses" element={<Expenses />} />
-              <Route path="time-periods/:id/paychecks" element={<Paychecks />} />
-              <Route path="expenses" element={<Expenses />} />
-              <Route path="paychecks" element={<Paychecks />} />
+              {/* <Route path="time-periods" element={<TimePeriods />} /> */}
+              {/* <Route path="time-periods/:id" element={<TimePeriodDetail />} /> */}
+              {/* <Route path="time-periods/:id/expenses" element={<Expenses />} /> */}
+              {/* <Route path="time-periods/:id/paychecks" element={<Paychecks />} /> */}
+              {/* <Route path="expenses" element={<Expenses />} /> */}
+              {/* <Route path="paychecks" element={<Paychecks />} /> */}
             </Route>
             
             {/* Redirect any unknown routes to Dashboard */}

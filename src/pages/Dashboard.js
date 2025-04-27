@@ -1,10 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { DataContext } from '../../contexts/DataContext';
-import { AuthContext } from '../../contexts/AuthContext';
+import { DataContext } from '../context/DataContext';
+import { AuthContext } from '../context/AuthContext';
 import { Bar } from 'react-chartjs-2';
 import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import './Dashboard.css';
+import '../styles/Dashboard.css';
 
 // Register Chart.js components
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);

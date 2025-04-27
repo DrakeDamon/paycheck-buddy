@@ -3,13 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Auth.css';
 
-const Register = () => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState('');
   
-  const { register, error, isAuthenticated } = useContext(AuthContext);
+  const { login, error, isAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
   
   // Redirect if already authenticated
@@ -31,23 +30,13 @@ const Register = () => {
     setFormError('');
     
     // Form validation
-    if (!username || !password || !confirmPassword) {
-      setFormError('All fields are required');
+    if (!username || !password) {
+      setFormError('Username and password are required');
       return;
     }
     
-    if (password !== confirmPassword) {
-      setFormError('Passwords do not match');
-      return;
-    }
-    
-    if (password.length < 6) {
-      setFormError('Password must be at least 6 characters long');
-      return;
-    }
-    
-    // Attempt registration
-    const success = await register(username, password);
+    // Attempt login
+    const success = await login(username, password);
     
     if (success) {
       navigate('/');
@@ -59,7 +48,7 @@ const Register = () => {
       <div className="auth-card">
         <div className="auth-header">
           <h1>PaycheckBuddy</h1>
-          <h2>Create a new account</h2>
+          <h2>Login to your account</h2>
         </div>
         
         {formError && (
@@ -76,7 +65,7 @@ const Register = () => {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Choose a username"
+              placeholder="Enter your username"
             />
           </div>
           
@@ -87,29 +76,18 @@ const Register = () => {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Choose a password"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
+              placeholder="Enter your password"
             />
           </div>
           
           <button type="submit" className="auth-button">
-            Register
+            Login
           </button>
         </form>
         
         <div className="auth-footer">
           <p>
-            Already have an account? <Link to="/login">Login</Link>
+            Don't have an account? <Link to="/register">Register</Link>
           </p>
         </div>
       </div>
@@ -117,4 +95,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { AuthContext } from './AuthContext';
 
@@ -12,21 +12,12 @@ export const DataProvider = ({ children }) => {
   const [paychecks, setPaychecks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Load all user data when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadUserData();
-    } else {
-      // Reset data when logged out
-      setTimePeriods([]);
-      setExpenses([]);
-      setPaychecks([]);
-    }
-  }, [isAuthenticated]);
-
-  // Single function to load all user data
-  const loadUserData = async () => {
+  // Use useCallback to prevent function recreation on every render
+  const loadUserData = useCallback(async () => {
+    if (!isAuthenticated || dataLoaded) return;
+    
     try {
       setLoading(true);
       setError(null);
@@ -37,6 +28,7 @@ export const DataProvider = ({ children }) => {
       setTimePeriods(userData.time_periods || []);
       setExpenses(userData.expenses || []);
       setPaychecks(userData.paychecks || []);
+      setDataLoaded(true);
       
       setLoading(false);
     } catch (err) {
@@ -44,7 +36,20 @@ export const DataProvider = ({ children }) => {
       setError(err.response?.data?.error || 'Failed to load user data');
       console.error('Error loading user data:', err);
     }
-  };
+  }, [isAuthenticated, dataLoaded]);
+
+  // Load all user data when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !dataLoaded) {
+      loadUserData();
+    } else if (!isAuthenticated) {
+      // Reset data when logged out
+      setTimePeriods([]);
+      setExpenses([]);
+      setPaychecks([]);
+      setDataLoaded(false);
+    }
+  }, [isAuthenticated, loadUserData, dataLoaded]);
 
   // Time Period CRUD operations
   const createTimePeriod = async (timePeriod) => {
@@ -237,35 +242,17 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Get summary for a time period
-  const getTimePeriodSummary = async (timePeriodId) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await axios.get(`/api/time_periods/${timePeriodId}/summary`);
-      
-      setLoading(false);
-      return response.data;
-    } catch (err) {
-      setLoading(false);
-      setError(err.response?.data?.error || 'Failed to get time period summary');
-      console.error('Error getting time period summary:', err);
-      return null;
-    }
-  };
-
   // Helper functions for filtered data
-  const getExpensesByTimePeriod = (timePeriodId) => {
+  const getExpensesByTimePeriod = useCallback((timePeriodId) => {
     return expenses.filter(expense => expense.time_period_id === timePeriodId);
-  };
+  }, [expenses]);
 
-  const getPaychecksByTimePeriod = (timePeriodId) => {
+  const getPaychecksByTimePeriod = useCallback((timePeriodId) => {
     return paychecks.filter(paycheck => paycheck.time_period_id === timePeriodId);
-  };
+  }, [paychecks]);
 
   // Calculate balance for a time period
-  const calculateTimePeriodBalance = (timePeriodId) => {
+  const calculateTimePeriodBalance = useCallback((timePeriodId) => {
     const periodExpenses = getExpensesByTimePeriod(timePeriodId);
     const periodPaychecks = getPaychecksByTimePeriod(timePeriodId);
     
@@ -277,7 +264,7 @@ export const DataProvider = ({ children }) => {
       expenses: totalExpenses,
       balance: totalIncome - totalExpenses
     };
-  };
+  }, [getExpensesByTimePeriod, getPaychecksByTimePeriod]);
 
   // Value object to provide through context
   const value = {
@@ -296,7 +283,6 @@ export const DataProvider = ({ children }) => {
     createPaycheck,
     updatePaycheck,
     deletePaycheck,
-    getTimePeriodSummary,
     getExpensesByTimePeriod,
     getPaychecksByTimePeriod,
     calculateTimePeriodBalance

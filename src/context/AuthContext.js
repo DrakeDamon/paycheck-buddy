@@ -12,18 +12,21 @@ export const AuthProvider = ({ children }) => {
   
   // Initialize auth state from localStorage on component mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (token && storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
       
-      // Set default Authorization header for all requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
+      if (token && storedUser) {
+        // Set default Authorization header for all requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setCurrentUser(JSON.parse(storedUser));
+        setIsAuthenticated(true);
+      }
+      
+      setLoading(false);
+    };
     
-    setLoading(false);
+    checkAuth();
   }, []);
   
   // Register function
@@ -110,7 +113,7 @@ export const AuthProvider = ({ children }) => {
       
       localStorage.setItem('token', access_token);
       
-      // Set default Authorization header
+      // Update Authorization header
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
       return true;
