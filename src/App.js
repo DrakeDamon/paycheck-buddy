@@ -13,7 +13,6 @@ import Register from './Auth/Register';
 // Main Pages
 import Dashboard from './pages/Dashboard';
 import TimePeriods from './pages/TimePeriods';
-// import TimePeriodDetail from './pages/TimePeriods/TimePeriodDetail';
 import Expenses from './pages/Expenses';
 import Paychecks from './pages/Paychecks';
 
@@ -31,7 +30,7 @@ const ProtectedLayout = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Since Layout component is not available yet, just render the Outlet directly
+  // Render the Layout component with Outlet for nested routes
   return <Layout />;
 };
 
@@ -48,12 +47,17 @@ function App() {
             {/* Protected App Routes */}
             <Route path="/" element={<ProtectedLayout />}>
               <Route index element={<Dashboard />} />
+              
+              {/* Time Periods */}
               <Route path="time-periods" element={<TimePeriods />} />
-              {/* <Route path="time-periods/:id" element={<TimePeriodDetail />} /> */}
-              {/* <Route path="time-periods/:id/expenses" element={<Expenses />} /> */}
-              {/* <Route path="time-periods/:id/paychecks" element={<Paychecks />} /> */}
+              
+              {/* Expenses Routes */}
               <Route path="expenses" element={<Expenses />} />
+              <Route path="time-periods/:id/expenses" element={<Expenses />} />
+              
+              {/* Paychecks Routes */}
               <Route path="paychecks" element={<Paychecks />} />
+              <Route path="time-periods/:id/paychecks" element={<Paychecks />} />
             </Route>
             
             {/* Redirect any unknown routes to Dashboard */}
