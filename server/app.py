@@ -66,7 +66,6 @@ def create_app(config_class=Config):
                 "GET /api/user_data": "Get all user data in a single request (efficient loading)"
             }
         })
-        return jsonify(response), 200
     
 
     # Error handlers
