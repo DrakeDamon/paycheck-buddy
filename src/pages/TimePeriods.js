@@ -8,41 +8,16 @@ const TimePeriods = () => {
     timePeriods, 
     loading, 
     error, 
-    createTimePeriod, 
     deleteTimePeriod,
     calculateTimePeriodBalance,
     getExpensesByTimePeriod,
     getPaychecksByTimePeriod
   } = useContext(DataContext);
   
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: '', type: 'monthly' });
-  const [formError, setFormError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [sortColumn, setSortColumn] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFormError('');
-    if (!formData.name.trim()) {
-      setFormError('Name is required');
-      return;
-    }
-    try {
-      await createTimePeriod(formData);
-      setFormData({ name: '', type: 'monthly' });
-      setShowForm(false);
-    } catch (err) {
-      setFormError('Failed to create time period');
-    }
-  };
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this time period? This will also delete all associated expenses and paychecks.')) {
@@ -108,46 +83,12 @@ const TimePeriods = () => {
     <div className="time-periods-page">
       <header className="page-header">
         <h1>Time Periods</h1>
-        <button className="add-button" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : 'Add Time Period'}
-        </button>
+        <Link to="/time-periods/new" className="add-button">
+          Create New Time Period
+        </Link>
       </header>
 
       {error && <div className="error-message">{error}</div>}
-
-      {showForm && (
-        <div className="form-container">
-          {formError && <div className="form-error">{formError}</div>}
-          <form onSubmit={handleSubmit} className="time-period-form">
-            <div className="form-group">
-              <label htmlFor="name">Time Period Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="e.g., January 2025"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="type">Time Period Type</label>
-              <select
-                id="type"
-                name="type"
-                value={formData.type}
-                onChange={handleInputChange}
-              >
-                <option value="bi-monthly">Bi-Monthly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-            <button type="submit" className="submit-button">Create Time Period</button>
-          </form>
-        </div>
-      )}
 
       {timePeriods.length > 0 ? (
         <div className="time-periods-table">
@@ -195,7 +136,11 @@ const TimePeriods = () => {
             <tbody>
               {sortedData.map(period => (
                 <tr key={period.id}>
-                  <td>{period.name}</td>
+                  <td>
+                    <Link to={`/time-periods/${period.id}`} className="period-name-link">
+                      {period.name}
+                    </Link>
+                  </td>
                   <td>{period.type}</td>
                   <td>${period.balance.income.toFixed(2)}</td>
                   <td>${period.balance.expenses.toFixed(2)}</td>
@@ -205,9 +150,18 @@ const TimePeriods = () => {
                   <td>{period.paycheckCount}</td>
                   <td>{period.expenseCount}</td>
                   <td className="actions">
-                    <Link to={`/time-periods/${period.id}/paychecks`} className="action-button paycheck">P</Link>
-                    <Link to={`/time-periods/${period.id}/expenses`} className="action-button expense">E</Link>
-                    <button className="action-button delete" onClick={() => handleDelete(period.id)}>D</button>
+                    <Link to={`/time-periods/${period.id}`} className="action-button edit" title="Edit Time Period">
+                      Edit
+                    </Link>
+                    <Link to={`/time-periods/${period.id}/paychecks`} className="action-button paycheck" title="Manage Paychecks">
+                      P
+                    </Link>
+                    <Link to={`/time-periods/${period.id}/expenses`} className="action-button expense" title="Manage Expenses">
+                      E
+                    </Link>
+                    <button className="action-button delete" onClick={() => handleDelete(period.id)} title="Delete Time Period">
+                      D
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -217,16 +171,17 @@ const TimePeriods = () => {
       ) : (
         <div className="no-data">
           <p>No time periods found. Create your first time period to get started!</p>
-          <button className="add-button" onClick={() => setShowForm(true)}>
+          <Link to="/time-periods/new" className="add-button">
             Create Time Period
-          </button>
+          </Link>
         </div>
       )}
 
       <div className="info-box">
         <h3>How PaycheckBuddy Works</h3>
         <p>
-          First, create time periods that match your financial cycles (bi-monthly, monthly, yearly). Time periods should match your income cycle. Name them according to when you receive paychecks.
+          First, create time periods that match your financial cycles (bi-monthly, monthly, yearly). 
+          Time periods should match your income cycle. Name them according to when you receive paychecks.
           Then add your paychecks and expenses to each time period to see if your income covers your expenses.
         </p>
       </div>

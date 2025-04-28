@@ -15,7 +15,7 @@ import Dashboard from './pages/Dashboard';
 import TimePeriods from './pages/TimePeriods';
 import Expenses from './pages/Expenses';
 import Paychecks from './pages/Paychecks';
-
+import TimePeriodManagement from './components/TimePeriodManagement';
 // Protected Route component implemented inline
 const ProtectedLayout = () => {
   const { isAuthenticated, loading } = useContext(AuthContext);
@@ -50,7 +50,8 @@ function App() {
               
               {/* Time Periods */}
               <Route path="time-periods" element={<TimePeriods />} />
-              
+              <Route path="time-periods/:id" element={<TimePeriodManagement />} />
+              <Route path="time-periods/new" element={<TimePeriodManagement />} />
               {/* Expenses Routes */}
               <Route path="expenses" element={<Expenses />} />
               <Route path="time-periods/:id/expenses" element={<Expenses />} />
