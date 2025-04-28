@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { AuthContext } from './AuthContext';
 
@@ -6,30 +6,34 @@ export const DataContext = createContext();
 
 export const DataProvider = ({ children }) => {
   const { isAuthenticated } = useContext(AuthContext);
-  
+
   const [timePeriods, setTimePeriods] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [paychecks, setPaychecks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  
+  // Add filter states
+  const [filterTimePeriodType, setFilterTimePeriodType] = useState('All');
+  const [filterTimePeriod, setFilterTimePeriod] = useState(null); // null represents 'All'
 
-  // Use useCallback to prevent function recreation on every render
+  // Load user data
   const loadUserData = useCallback(async () => {
     if (!isAuthenticated || dataLoaded) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get('/api/user_data');
       const userData = response.data;
-      
+
       setTimePeriods(userData.time_periods || []);
       setExpenses(userData.expenses || []);
       setPaychecks(userData.paychecks || []);
       setDataLoaded(true);
-      
+
       setLoading(false);
     } catch (err) {
       setLoading(false);
@@ -38,12 +42,10 @@ export const DataProvider = ({ children }) => {
     }
   }, [isAuthenticated, dataLoaded]);
 
-  // Load all user data when authenticated
   useEffect(() => {
     if (isAuthenticated && !dataLoaded) {
       loadUserData();
     } else if (!isAuthenticated) {
-      // Reset data when logged out
       setTimePeriods([]);
       setExpenses([]);
       setPaychecks([]);
@@ -56,13 +58,13 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.post('/api/time_periods', timePeriod);
       const newTimePeriod = response.data;
-      
+
       setTimePeriods([...timePeriods, newTimePeriod]);
       setLoading(false);
-      
+
       return newTimePeriod;
     } catch (err) {
       setLoading(false);
@@ -76,14 +78,14 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.put(`/api/time_periods/${id}`, updates);
       const updatedTimePeriod = response.data;
-      
-      setTimePeriods(timePeriods.map(period => 
+
+      setTimePeriods(timePeriods.map(period =>
         period.id === id ? updatedTimePeriod : period
       ));
-      
+
       setLoading(false);
       return updatedTimePeriod;
     } catch (err) {
@@ -98,16 +100,13 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       await axios.delete(`/api/time_periods/${id}`);
-      
-      // Remove the time period from state
+
       setTimePeriods(timePeriods.filter(period => period.id !== id));
-      
-      // Also remove any expenses or paychecks associated with this time period
       setExpenses(expenses.filter(expense => expense.time_period_id !== id));
       setPaychecks(paychecks.filter(paycheck => paycheck.time_period_id !== id));
-      
+
       setLoading(false);
       return true;
     } catch (err) {
@@ -123,13 +122,13 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.post(`/api/time_periods/${timePeriodId}/expenses`, expense);
       const newExpense = response.data;
-      
+
       setExpenses([...expenses, newExpense]);
       setLoading(false);
-      
+
       return newExpense;
     } catch (err) {
       setLoading(false);
@@ -143,14 +142,14 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.put(`/api/time_periods/${timePeriodId}/expenses/${expenseId}`, updates);
       const updatedExpense = response.data;
-      
-      setExpenses(expenses.map(expense => 
+
+      setExpenses(expenses.map(expense =>
         expense.id === expenseId ? updatedExpense : expense
       ));
-      
+
       setLoading(false);
       return updatedExpense;
     } catch (err) {
@@ -165,12 +164,12 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       await axios.delete(`/api/time_periods/${timePeriodId}/expenses/${expenseId}`);
-      
+
       setExpenses(expenses.filter(expense => expense.id !== expenseId));
       setLoading(false);
-      
+
       return true;
     } catch (err) {
       setLoading(false);
@@ -185,13 +184,13 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.post(`/api/time_periods/${timePeriodId}/paychecks`, paycheck);
       const newPaycheck = response.data;
-      
+
       setPaychecks([...paychecks, newPaycheck]);
       setLoading(false);
-      
+
       return newPaycheck;
     } catch (err) {
       setLoading(false);
@@ -205,14 +204,14 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.put(`/api/time_periods/${timePeriodId}/paychecks/${paycheckId}`, updates);
       const updatedPaycheck = response.data;
-      
-      setPaychecks(paychecks.map(paycheck => 
+
+      setPaychecks(paychecks.map(paycheck =>
         paycheck.id === paycheckId ? updatedPaycheck : paycheck
       ));
-      
+
       setLoading(false);
       return updatedPaycheck;
     } catch (err) {
@@ -227,12 +226,12 @@ export const DataProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       await axios.delete(`/api/time_periods/${timePeriodId}/paychecks/${paycheckId}`);
-      
+
       setPaychecks(paychecks.filter(paycheck => paycheck.id !== paycheckId));
       setLoading(false);
-      
+
       return true;
     } catch (err) {
       setLoading(false);
@@ -242,7 +241,7 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Helper functions for filtered data
+  // Helper functions
   const getExpensesByTimePeriod = useCallback((timePeriodId) => {
     return expenses.filter(expense => expense.time_period_id === timePeriodId);
   }, [expenses]);
@@ -251,14 +250,13 @@ export const DataProvider = ({ children }) => {
     return paychecks.filter(paycheck => paycheck.time_period_id === timePeriodId);
   }, [paychecks]);
 
-  // Calculate balance for a time period
   const calculateTimePeriodBalance = useCallback((timePeriodId) => {
     const periodExpenses = getExpensesByTimePeriod(timePeriodId);
     const periodPaychecks = getPaychecksByTimePeriod(timePeriodId);
-    
+
     const totalExpenses = periodExpenses.reduce((total, expense) => total + expense.amount, 0);
     const totalIncome = periodPaychecks.reduce((total, paycheck) => total + paycheck.amount, 0);
-    
+
     return {
       income: totalIncome,
       expenses: totalExpenses,
@@ -266,7 +264,38 @@ export const DataProvider = ({ children }) => {
     };
   }, [getExpensesByTimePeriod, getPaychecksByTimePeriod]);
 
-  // Value object to provide through context
+  // Filtering logic with useMemo for dynamic updates
+  const filteredExpenses = useMemo(() => {
+    if (filterTimePeriod !== null) {
+      return expenses.filter(expense => expense.time_period_id === filterTimePeriod);
+    } else if (filterTimePeriodType !== 'All') {
+      const periodsOfType = timePeriods.filter(period => period.type === filterTimePeriodType);
+      const periodIds = periodsOfType.map(period => period.id);
+      return expenses.filter(expense => periodIds.includes(expense.time_period_id));
+    } else {
+      return expenses;
+    }
+  }, [expenses, timePeriods, filterTimePeriodType, filterTimePeriod]);
+
+  const filteredPaychecks = useMemo(() => {
+    if (filterTimePeriod !== null) {
+      return paychecks.filter(paycheck => paycheck.time_period_id === filterTimePeriod);
+    } else if (filterTimePeriodType !== 'All') {
+      const periodsOfType = timePeriods.filter(period => period.type === filterTimePeriodType);
+      const periodIds = periodsOfType.map(period => period.id);
+      return paychecks.filter(paycheck => periodIds.includes(paycheck.time_period_id));
+    } else {
+      return paychecks;
+    }
+  }, [paychecks, timePeriods, filterTimePeriodType, filterTimePeriod]);
+
+  // Reset filters function
+  const resetFilters = () => {
+    setFilterTimePeriodType('All');
+    setFilterTimePeriod(null);
+  };
+
+  // Updated context value
   const value = {
     timePeriods,
     expenses,
@@ -285,7 +314,14 @@ export const DataProvider = ({ children }) => {
     deletePaycheck,
     getExpensesByTimePeriod,
     getPaychecksByTimePeriod,
-    calculateTimePeriodBalance
+    calculateTimePeriodBalance,
+    filterTimePeriodType,
+    setFilterTimePeriodType,
+    filterTimePeriod,
+    setFilterTimePeriod,
+    filteredExpenses,
+    filteredPaychecks,
+    resetFilters
   };
 
   return (

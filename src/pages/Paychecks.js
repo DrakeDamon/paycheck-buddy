@@ -17,6 +17,7 @@ const Paychecks = () => {
   } = useContext(DataContext);
   
   const [filteredPaychecks, setFilteredPaychecks] = useState([]);
+  const [filterTimePeriod, setFilterTimePeriod] = useState('all'); // New filter state
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
@@ -36,17 +37,19 @@ const Paychecks = () => {
     }
   }, [id, timePeriods]);
   
-  // Filter paychecks by time period if id is provided
+  // Filter paychecks based on id or filterTimePeriod
   useEffect(() => {
     if (id) {
-      // Specific time period's paychecks
       const periodPaychecks = getPaychecksByTimePeriod(parseInt(id));
       setFilteredPaychecks(periodPaychecks);
-    } else {
-      // All paychecks
+    } else if (filterTimePeriod === 'all') {
       setFilteredPaychecks(paychecks);
+    } else {
+      const periodId = parseInt(filterTimePeriod);
+      const filtered = getPaychecksByTimePeriod(periodId);
+      setFilteredPaychecks(filtered);
     }
-  }, [id, paychecks, getPaychecksByTimePeriod]);
+  }, [id, paychecks, filterTimePeriod, getPaychecksByTimePeriod]);
   
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -60,13 +63,11 @@ const Paychecks = () => {
     e.preventDefault();
     setFormError('');
     
-    // Validate form
     if (!formData.amount) {
       setFormError('Amount is required');
       return;
     }
     
-    // Validate amount is a number
     const amount = parseFloat(formData.amount);
     if (isNaN(amount) || amount <= 0) {
       setFormError('Amount must be a positive number');
@@ -74,16 +75,14 @@ const Paychecks = () => {
     }
     
     try {
-      // Create the paycheck object
       const paycheckData = {
         ...formData,
         amount,
-        time_period_id: id // Use the time period ID from URL params
+        time_period_id: id
       };
       
       await createPaycheck(parseInt(id), paycheckData);
       
-      // Reset form and hide it
       setFormData({
         amount: '',
         date_received: '',
@@ -98,7 +97,6 @@ const Paychecks = () => {
   const handleDelete = async (paycheckId) => {
     if (window.confirm('Are you sure you want to delete this paycheck?')) {
       try {
-        // Find the time period ID for this paycheck
         const paycheck = paychecks.find(pc => pc.id === paycheckId);
         if (paycheck) {
           await deletePaycheck(paycheck.time_period_id, paycheckId);
@@ -208,17 +206,32 @@ const Paychecks = () => {
       
       {!id && timePeriods.length > 0 && (
         <div className="time-period-selector">
-          <h2>Select a Time Period to Add Paychecks</h2>
-          <div className="time-period-cards">
-            {timePeriods.map(period => (
-              <div key={period.id} className="time-period-select-card">
-                <h3>{period.name}</h3>
-                <span className="period-type">{period.type}</span>
-                <Link to={`/time-periods/${period.id}/paychecks`} className="select-button">
-                  View & Add Paychecks
-                </Link>
-              </div>
-            ))}
+          <h2>Select a Time Period to Filter or Add Paychecks</h2>
+          <div className="filter-and-add">
+            <select
+              id="timePeriodFilter"
+              value={filterTimePeriod}
+              onChange={(e) => setFilterTimePeriod(e.target.value)}
+            >
+              <option value="all">All Paychecks</option>
+              {timePeriods.map(period => (
+                <option key={period.id} value={period.id}>
+                  {period.name}
+                </option>
+              ))}
+            </select>
+            <button
+              className="add-paycheck-button"
+              onClick={() => {
+                if (filterTimePeriod !== 'all') {
+                  navigate(`/time-periods/${filterTimePeriod}/paychecks`);
+                } else {
+                  alert('Please select a specific time period to add a paycheck.');
+                }
+              }}
+            >
+              Add Paycheck
+            </button>
           </div>
         </div>
       )}
@@ -237,10 +250,8 @@ const Paychecks = () => {
             </thead>
             <tbody>
               {filteredPaychecks.map(paycheck => {
-                // Find time period name
                 const timePeriod = timePeriods.find(period => period.id === paycheck.time_period_id);
                 const timePeriodName = timePeriod ? timePeriod.name : 'Unknown';
-                
                 return (
                   <tr key={paycheck.id}>
                     <td className="amount">
