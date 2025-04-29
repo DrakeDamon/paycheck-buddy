@@ -241,3 +241,145 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.chart-container,
+.category-chart {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chart-header h2 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.chart-filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chart-filters button {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-filters button:hover {
+  background-color: #e9ecef;
+}
+
+.chart-filters button.active {
+  background-color: #3498db;
+  border-color: #3498db;
+  color: white;
+}
+
+/* Pie chart layout */
+.pie-chart-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pie-chart {
+  flex: 1;
+  min-height: 250px;
+  position: relative;
+}
+
+.category-chart h2 {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.top-categories {
+  margin-top: 1.5rem;
+}
+
+.top-categories h3 {
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-bottom: 0.75rem;
+}
+
+.top-categories ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.top-categories li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.top-categories li:last-child {
+  border-bottom: none;
+}
+
+.category-name {
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.category-value {
+  color: #3498db;
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .dashboard-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .pie-chart {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .chart-filters {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .chart-filters button {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+  }
+}

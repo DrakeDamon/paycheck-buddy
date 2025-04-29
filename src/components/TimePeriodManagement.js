@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
-import '../styles/TimePeriods.css';
+import '../styles/TimePeriodManagement.css';
 
 const TimePeriodManagement = () => {
   const { id } = useParams();
@@ -389,7 +389,7 @@ const TimePeriodManagement = () => {
   return (
     <div className="time-period-management">
       <header className="page-header">
-        <h1>{isCreatingTimePeriod ? 'Create New Time Period' : `Edit: ${timePeriodData.name}`}</h1>
+        <h1>{isCreatingTimePeriod ? 'Create New Time Period' : `Time Period: ${timePeriodData.name}`}</h1>
         <Link to="/time-periods" className="back-button">
           Back to All Time Periods
         </Link>
@@ -486,18 +486,14 @@ const TimePeriodManagement = () => {
         <div className="section">
           <div className="section-header">
             <h2>Expenses</h2>
-            <button 
-              className={`add-button ${showExpenseForm && !editingExpenseId ? 'cancel' : ''}`}
-              onClick={() => {
-                if (showExpenseForm && !editingExpenseId) {
-                  cancelExpenseForm();
-                } else if (!editingExpenseId) {
-                  setShowExpenseForm(true);
-                }
-              }}
-            >
-              {showExpenseForm && !editingExpenseId ? 'Cancel' : 'Add Expense'}
-            </button>
+            {!showExpenseForm && (
+              <button 
+                className="add-button"
+                onClick={() => setShowExpenseForm(true)}
+              >
+                Add Expense
+              </button>
+            )}
           </div>
           
           {/* Expense Form */}
@@ -627,9 +623,18 @@ const TimePeriodManagement = () => {
                   </div>
                 </div>
                 
-                <button type="submit" className="submit-button">
-                  {editingExpenseId ? 'Update Expense' : 'Add Expense'}
-                </button>
+                <div className="form-actions">
+                  <button type="submit" className="submit-button">
+                    {editingExpenseId ? 'Update Expense' : 'Add Expense'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="cancel-button" 
+                    onClick={cancelExpenseForm}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </form>
             </div>
           )}
@@ -686,14 +691,6 @@ const TimePeriodManagement = () => {
           ) : (
             <div className="empty-state">
               <p>No expenses found for this time period.</p>
-              {!showExpenseForm && (
-                <button 
-                  className="add-button"
-                  onClick={() => setShowExpenseForm(true)}
-                >
-                  Add Your First Expense
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -704,18 +701,14 @@ const TimePeriodManagement = () => {
         <div className="section">
           <div className="section-header">
             <h2>Paychecks</h2>
-            <button 
-              className={`add-button ${showPaycheckForm && !editingPaycheckId ? 'cancel' : ''}`}
-              onClick={() => {
-                if (showPaycheckForm && !editingPaycheckId) {
-                  cancelPaycheckForm();
-                } else if (!editingPaycheckId) {
-                  setShowPaycheckForm(true);
-                }
-              }}
-            >
-              {showPaycheckForm && !editingPaycheckId ? 'Cancel' : 'Add Paycheck'}
-            </button>
+            {!showPaycheckForm && (
+              <button 
+                className="add-button"
+                onClick={() => setShowPaycheckForm(true)}
+              >
+                Add Paycheck
+              </button>
+            )}
           </div>
           
           {/* Paycheck Form */}
@@ -781,9 +774,18 @@ const TimePeriodManagement = () => {
                   </div>
                 </div>
                 
-                <button type="submit" className="submit-button">
-                  {editingPaycheckId ? 'Update Paycheck' : 'Add Paycheck'}
-                </button>
+                <div className="form-actions">
+                  <button type="submit" className="submit-button">
+                    {editingPaycheckId ? 'Update Paycheck' : 'Add Paycheck'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="cancel-button" 
+                    onClick={cancelPaycheckForm}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </form>
             </div>
           )}
@@ -832,14 +834,6 @@ const TimePeriodManagement = () => {
           ) : (
             <div className="empty-state">
               <p>No paychecks found for this time period.</p>
-              {!showPaycheckForm && (
-                <button 
-                  className="add-button"
-                  onClick={() => setShowPaycheckForm(true)}
-                >
-                  Add Your First Paycheck
-                </button>
-              )}
             </div>
           )}
         </div>

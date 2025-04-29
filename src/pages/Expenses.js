@@ -128,9 +128,7 @@ const Expenses = () => {
             <>
               <h1>Expenses for: {currentTimePeriod?.name || 'Unknown Time Period'}</h1>
               <div className="header-actions">
-                <Link to="/time-periods" className="secondary-button">
-                  Back to Time Periods
-                </Link>
+
                 <Link to="/expenses" className="secondary-button">
                   All Expenses
                 </Link>

@@ -119,9 +119,7 @@ const Paychecks = () => {
             <>
               <h1>Paychecks for: {currentTimePeriod?.name || 'Unknown Time Period'}</h1>
               <div className="header-actions">
-                <Link to="/time-periods" className="secondary-button">
-                  Back to Time Periods
-                </Link>
+
                 <Link to="/paychecks" className="secondary-button">
                   All Paychecks
                 </Link>

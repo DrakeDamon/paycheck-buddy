@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AuthContext';
 import { Bar } from 'react-chartjs-2';
-import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import '../styles/Dashboard.css';
 
 // Register Chart.js components
-Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 const Dashboard = () => {
   const { currentUser } = useContext(AuthContext);
@@ -23,6 +24,8 @@ const Dashboard = () => {
   } = useContext(DataContext);
   
   const [summaryData, setSummaryData] = useState(null);
+  const [categoryData, setCategoryData] = useState(null);
+  const [chartTimeframe, setChartTimeframe] = useState('all');
   
   // Calculate summary data when dependencies change
   useEffect(() => {
@@ -45,19 +48,55 @@ const Dashboard = () => {
       setSummaryData(summaries);
     }
   }, [timePeriods, expenses, paychecks, loading, calculateTimePeriodBalance, getExpensesByTimePeriod, getPaychecksByTimePeriod]);
+
+  // Generate expense categories data for pie chart
+  useEffect(() => {
+    if (expenses.length > 0) {
+      // Group expenses by category
+      const categories = {};
+      expenses.forEach(expense => {
+        const category = expense.category || 'Uncategorized';
+        if (categories[category]) {
+          categories[category] += expense.amount;
+        } else {
+          categories[category] = expense.amount;
+        }
+      });
+      
+      // Convert to array format for pie chart
+      const categoryArray = Object.keys(categories).map(name => ({
+        name,
+        value: categories[name]
+      }));
+      
+      // Sort by value (highest first)
+      categoryArray.sort((a, b) => b.value - a.value);
+      
+      setCategoryData(categoryArray);
+    }
+  }, [expenses]);
   
   // Prepare chart data
   const chartData = {
-    labels: summaryData?.map(item => item.name) || [],
+    labels: summaryData
+      ?.filter(item => chartTimeframe === 'all' || item.type === chartTimeframe)
+      .slice(0, 6)
+      .map(item => item.name) || [],
     datasets: [
       {
         label: 'Income',
-        data: summaryData?.map(item => item.income) || [],
+        data: summaryData
+          ?.filter(item => chartTimeframe === 'all' || item.type === chartTimeframe)
+          .slice(0, 6)
+          .map(item => item.income) || [],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
       },
       {
         label: 'Expenses',
-        data: summaryData?.map(item => item.expenses) || [],
+        data: summaryData
+          ?.filter(item => chartTimeframe === 'all' || item.type === chartTimeframe)
+          .slice(0, 6)
+          .map(item => item.expenses) || [],
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
       }
     ],
@@ -87,6 +126,33 @@ const Dashboard = () => {
       title: {
         display: true,
         text: 'Income vs. Expenses by Time Period'
+      },
+    },
+  };
+
+  // Prepare pie chart data
+  const pieData = {
+    labels: categoryData?.slice(0, 6).map(item => item.name) || [],
+    datasets: [
+      {
+        data: categoryData?.slice(0, 6).map(item => item.value) || [],
+        backgroundColor: [
+          '#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#ffc658', '#ff8042'
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const pieOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right',
+      },
+      title: {
+        display: true,
+        text: 'Expense Breakdown by Category'
       },
     },
   };
@@ -135,18 +201,77 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {timePeriods.length > 0 ? (
-        <div className="dashboard-chart">
-          <Bar data={chartData} options={chartOptions} />
+      <div className="dashboard-charts">
+        <div className="chart-container">
+          <div className="chart-header">
+            <h2>Income vs Expenses</h2>
+            <div className="chart-filters">
+              <button 
+                onClick={() => setChartTimeframe('all')} 
+                className={chartTimeframe === 'all' ? 'active' : ''}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => setChartTimeframe('monthly')} 
+                className={chartTimeframe === 'monthly' ? 'active' : ''}
+              >
+                Monthly
+              </button>
+              <button 
+                onClick={() => setChartTimeframe('bi-monthly')} 
+                className={chartTimeframe === 'bi-monthly' ? 'active' : ''}
+              >
+                Bi-Monthly
+              </button>
+              <button 
+                onClick={() => setChartTimeframe('yearly')} 
+                className={chartTimeframe === 'yearly' ? 'active' : ''}
+              >
+                Yearly
+              </button>
+            </div>
+          </div>
+          {timePeriods.length > 0 ? (
+            <div className="dashboard-chart">
+              <Bar data={chartData} options={chartOptions} />
+            </div>
+          ) : (
+            <div className="no-data">
+              <p>No time periods found. Start by adding a time period.</p>
+              <Link to="/time-periods" className="action-button">
+                Add Time Period
+              </Link>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="no-data">
-          <p>No time periods found. Start by adding a time period.</p>
-          <Link to="/time-periods" className="action-button">
-            Add Time Period
-          </Link>
+        
+        <div className="category-chart">
+          <h2>Expense Breakdown</h2>
+          {categoryData && categoryData.length > 0 ? (
+            <div className="pie-chart-container">
+              <div className="pie-chart">
+                <Pie data={pieData} options={pieOptions} />
+              </div>
+              <div className="top-categories">
+                <h3>Top Categories</h3>
+                <ul>
+                  {categoryData.slice(0, 3).map((category, index) => (
+                    <li key={index}>
+                      <span className="category-name">{category.name}</span>
+                      <span className="category-value">${category.value.toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="no-data">
+              <p>No expense data available.</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
       
       {summaryData && summaryData.length > 0 && (
         <div className="time-period-list">
@@ -185,20 +310,7 @@ const Dashboard = () => {
         </div>
       )}
       
-      <div className="quick-actions">
-        <h2>Quick Actions</h2>
-        <div className="action-buttons">
-          <Link to="/time-periods" className="action-button">
-            Manage Time Periods
-          </Link>
-          <Link to="/expenses" className="action-button">
-            View All Expenses
-          </Link>
-          <Link to="/paychecks" className="action-button">
-            View All Paychecks
-          </Link>
-        </div>
-      </div>
+
     </div>
   );
 };
