@@ -12,8 +12,7 @@ class UserSchema(ma.SQLAlchemySchema):
     id = ma.auto_field(dump_only=True)
     username = ma.auto_field(required=True)
     password = fields.String(required=True, load_only=True)  # Only load, never dump
-    
-    # We don't include relationships in the base schema to avoid circular references
+  
     
     @post_load
     def make_user(self, data, **kwargs):
@@ -84,7 +83,6 @@ class PaycheckSchema(ma.SQLAlchemySchema):
         if value <= 0:
             raise ValidationError("Amount must be greater than 0")
 
-# Extended schemas with relationships for detailed views
 class UserDataSchema(ma.SQLAlchemySchema):
     class Meta:
         model = User

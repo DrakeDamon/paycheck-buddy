@@ -17,7 +17,7 @@ class User(db.Model):
     expenses = db.relationship('Expense', back_populates='user', cascade='all, delete-orphan')
     paychecks = db.relationship('Paycheck', back_populates='user', cascade='all, delete-orphan')
     
-    # Association proxies - allows direct access to time_periods through expenses and paychecks
+    # Association proxies 
     time_periods_via_expenses = association_proxy('expenses', 'time_period')
     time_periods_via_paychecks = association_proxy('paychecks', 'time_period')
     
