@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from flask_migrate import Migrate
@@ -16,20 +16,17 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
-    # Initialize extensions
     db.init_app(app)
-    migrate = Migrate(app, db)
+    Migrate(app, db)
     CORS(app)
-    jwt = JWTManager(app)
+    JWTManager(app)
     
-    # Initialize Flask-RESTful
     api = Api(app)
     
      # Home route to document available endpoints
     @app.route('/')
     def home():
         return jsonify({
-            
             "endpoints": {
                 # Authentication endpoints
                 "POST /api/auth/register": "Register a new user",
@@ -67,7 +64,6 @@ def create_app(config_class=Config):
             }
         })
     
-
     # Error handlers
     @app.errorhandler(404)
     def not_found(error):
@@ -77,8 +73,6 @@ def create_app(config_class=Config):
     def internal_error(error):
         db.session.rollback()
         return jsonify({"error": "Internal server error"}), 500
-
-
 
     class RegisterResource(Resource):
         def post(self):
@@ -150,24 +144,17 @@ def create_app(config_class=Config):
         @jwt_required()
         def get(self):
             current_user_id = get_jwt_identity()
-            
-            # Get time periods the user has access to through expenses and paychecks
             user = User.query.get_or_404(current_user_id)
             
-            # Use the association proxies we defined in the User model
+            # Get time periods through association proxies
             user_time_periods = set()
-            
-            # Get time periods through expenses
             for expense in user.expenses:
                 user_time_periods.add(expense.time_period)
-                
-            # Get time periods through paychecks
             for paycheck in user.paychecks:
                 user_time_periods.add(paycheck.time_period)
             
             # If no time periods found, return system defined time periods
             if not user_time_periods:
-                # Get some common time periods
                 time_periods = TimePeriod.query.all()
                 if time_periods:
                     return time_periods_schema.dump(time_periods), 200
@@ -222,8 +209,7 @@ def create_app(config_class=Config):
                 expenses = Expense.query.filter_by(user_id=current_user_id).all()
                 return expenses_schema.dump(expenses), 200
             
-            # Get expenses for a specific time period
-            time_period = TimePeriod.query.get_or_404(time_period_id)
+            # Get expenses for a specific time period - skip loading time_period object
             expenses = Expense.query.filter_by(
                 user_id=current_user_id,
                 time_period_id=time_period_id
@@ -239,12 +225,10 @@ def create_app(config_class=Config):
             if time_period_id == 'all':
                 return {"error": "Cannot create an expense without specifying a time period"}, 400
             
+            # Verify time period exists (404 if not)
+            TimePeriod.query.get_or_404(time_period_id)
+            
             data = request.get_json()
-            
-            # Verify the time period exists
-            time_period = TimePeriod.query.get_or_404(time_period_id)
-            
-            # Set the time_period_id and user_id
             data['time_period_id'] = time_period_id
             data['user_id'] = current_user_id
             
@@ -296,8 +280,7 @@ def create_app(config_class=Config):
             db.session.commit()
             return '', 204
     
-    
-     # Time Period Paychecks Resources
+    # Time Period Paychecks Resources
     class TimePeriodPaycheckCollectionResource(Resource):
         @jwt_required()
         def get(self, time_period_id):
@@ -308,8 +291,7 @@ def create_app(config_class=Config):
                 paychecks = Paycheck.query.filter_by(user_id=current_user_id).all()
                 return paychecks_schema.dump(paychecks), 200
             
-            # Get paychecks for a specific time period
-            time_period = TimePeriod.query.get_or_404(time_period_id)
+            # Get paychecks for a specific time period - skip loading time_period object
             paychecks = Paycheck.query.filter_by(
                 user_id=current_user_id,
                 time_period_id=time_period_id
@@ -325,12 +307,10 @@ def create_app(config_class=Config):
             if time_period_id == 'all':
                 return {"error": "Cannot create a paycheck without specifying a time period"}, 400
             
+            # Verify time period exists (404 if not)
+            TimePeriod.query.get_or_404(time_period_id)
+            
             data = request.get_json()
-            
-            # Verify the time period exists
-            time_period = TimePeriod.query.get_or_404(time_period_id)
-            
-            # Set the time_period_id and user_id
             data['time_period_id'] = time_period_id
             data['user_id'] = current_user_id
             
@@ -391,19 +371,17 @@ def create_app(config_class=Config):
             # Verify the time period exists
             time_period = TimePeriod.query.get_or_404(time_period_id)
             
-            # Get expenses for this time period and user
+            # Get data for this time period and user
             expenses = Expense.query.filter_by(
                 user_id=current_user_id,
                 time_period_id=time_period_id
             ).all()
-            
-            # Get paychecks for this time period and user
             paychecks = Paycheck.query.filter_by(
                 user_id=current_user_id,
                 time_period_id=time_period_id
             ).all()
             
-            # Format response with time period and associated data
+            # Format response
             result = {
                 "time_period": time_period_schema.dump(time_period),
                 "expenses": expenses_schema.dump(expenses),
@@ -412,15 +390,12 @@ def create_app(config_class=Config):
             
             return result, 200
 
-
-    # User Data Resource (single API endpoint for loading all user data efficiently)
+    # User Data Resource
     class UserDataResource(Resource):
         @jwt_required()
         def get(self):
             current_user_id = get_jwt_identity()
             user = User.query.get_or_404(current_user_id)
-            
-            # Use the UserDataSchema to get all user data in one response
             return user_data_schema.dump(user), 200
     
     # Register resources with the API
@@ -428,18 +403,18 @@ def create_app(config_class=Config):
     api.add_resource(LoginResource, '/api/auth/login')
     api.add_resource(TokenRefreshResource, '/api/auth/refresh')
     
-    # Time Periods - the central organizing principle
+    # Time Periods
     api.add_resource(TimePeriodListResource, '/api/time_periods')
     api.add_resource(TimePeriodDetailResource, '/api/time_periods/<int:time_period_id>')
     
-    # Expense resources (through time periods)
+    # Expense resources
     api.add_resource(TimePeriodExpenseCollectionResource, 
                      '/api/time_periods/<int:time_period_id>/expenses',
                      '/api/time_periods/<string:time_period_id>/expenses')
     api.add_resource(TimePeriodExpenseDetailResource, 
                      '/api/time_periods/<int:time_period_id>/expenses/<int:expense_id>')
     
-    # Paycheck resources (through time periods)
+    # Paycheck resources
     api.add_resource(TimePeriodPaycheckCollectionResource, 
                     '/api/time_periods/<int:time_period_id>/paychecks',
                     '/api/time_periods/<string:time_period_id>/paychecks')
@@ -454,7 +429,6 @@ def create_app(config_class=Config):
     
     return app
 
-# Create an app instance for direct running and Flask CLI
 app = create_app()
 
 if __name__ == '__main__':
