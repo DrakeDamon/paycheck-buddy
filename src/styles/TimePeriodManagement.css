@@ -341,3 +341,31 @@
     gap: 1rem;
   }
 }
+
+.time-period-details {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.detail-item {
+  margin-bottom: 1rem;
+  display: flex;
+}
+
+.detail-item .label {
+  font-weight: 500;
+  width: 100px;
+}
+
+.detail-item .value {
+  color: #2c3e50;
+}
+
+.note {
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  background-color: #e9f7fe;
+  border-radius: 4px;
+  color: #3498db;
+}

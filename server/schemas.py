@@ -12,7 +12,6 @@ class UserSchema(ma.SQLAlchemySchema):
     id = ma.auto_field(dump_only=True)
     username = ma.auto_field(required=True)
     password = fields.String(required=True, load_only=True)  # Only load, never dump
-  
     
     @post_load
     def make_user(self, data, **kwargs):
@@ -90,21 +89,19 @@ class UserDataSchema(ma.SQLAlchemySchema):
     id = ma.auto_field()
     username = ma.auto_field()
     
-    # Include relationships for the single API endpoint
+    # Include only the current user's expenses
     expenses = fields.List(fields.Nested(lambda: ExpenseSchema(exclude=('user_id',))))
+    
+    # Include only the current user's paychecks
     paychecks = fields.List(fields.Nested(lambda: PaycheckSchema(exclude=('user_id',))))
     
-    # Include time periods through association proxies
-    time_periods = fields.Method('get_time_periods')
+    # Include ALL time periods (shared resource)
+    time_periods = fields.Method('get_all_time_periods')
     
-    def get_time_periods(self, obj):
-        # Get all unique time periods from expenses and paychecks
-        time_periods = set()
-        for expense in obj.expenses:
-            time_periods.add(expense.time_period)
-        for paycheck in obj.paychecks:
-            time_periods.add(paycheck.time_period)
-        return TimePeriodSchema(many=True).dump(time_periods)
+    def get_all_time_periods(self, obj):
+        # Get all time periods from the database (shared resource)
+        all_time_periods = TimePeriod.query.all()
+        return TimePeriodSchema(many=True).dump(all_time_periods)
 
 # Initialize schema instances
 user_schema = UserSchema()

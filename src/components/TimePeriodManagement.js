@@ -1,3 +1,4 @@
+// src/components/TimePeriodManagement.js
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
@@ -13,8 +14,6 @@ const TimePeriodManagement = () => {
     loading, 
     error, 
     createTimePeriod,
-    updateTimePeriod,
-    deleteTimePeriod,
     getExpensesByTimePeriod,
     getPaychecksByTimePeriod,
     createExpense,
@@ -122,7 +121,7 @@ const TimePeriodManagement = () => {
     });
   };
   
-  // Submit time period data
+  // Submit time period data - only for creation, not for updates
   const handleTimePeriodSubmit = async (e) => {
     e.preventDefault();
     setTimePeriodError('');
@@ -136,11 +135,10 @@ const TimePeriodManagement = () => {
       if (isCreatingTimePeriod) {
         const newTimePeriod = await createTimePeriod(timePeriodData);
         navigate(`/time-periods/${newTimePeriod.id}`);
-      } else {
-        await updateTimePeriod(parseInt(id), timePeriodData);
-      }
+      } 
+      // Removed the update case as users can't update time periods
     } catch (err) {
-      setTimePeriodError(isCreatingTimePeriod ? 'Failed to create time period' : 'Failed to update time period');
+      setTimePeriodError('Failed to create time period');
     }
   };
   
@@ -332,7 +330,7 @@ const TimePeriodManagement = () => {
       }
     }
   };
-  
+
   // Delete paycheck
   const handleDeletePaycheck = async (paycheckId) => {
     if (window.confirm('Are you sure you want to delete this paycheck?')) {
@@ -356,7 +354,7 @@ const TimePeriodManagement = () => {
       }
     }
   };
-  
+
   // Cancel forms
   const cancelExpenseForm = () => {
     setExpenseData({
@@ -371,7 +369,7 @@ const TimePeriodManagement = () => {
     setEditingExpenseId(null);
     setShowExpenseForm(false);
   };
-  
+
   const cancelPaycheckForm = () => {
     setPaycheckData({
       amount: '',
@@ -381,11 +379,11 @@ const TimePeriodManagement = () => {
     setEditingPaycheckId(null);
     setShowPaycheckForm(false);
   };
-  
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
-  
+
   return (
     <div className="time-period-management">
       <header className="page-header">
@@ -397,7 +395,7 @@ const TimePeriodManagement = () => {
       
       {error && <div className="error-message">{error}</div>}
       
-      {/* Financial Summary Card */}
+      {/* Financial Summary Card - Only show if not creating a new time period */}
       {!isCreatingTimePeriod && (
         <div className="financial-summary-card">
           <div className="summary-item">
@@ -415,7 +413,7 @@ const TimePeriodManagement = () => {
         </div>
       )}
       
-      {/* Tab Navigation */}
+      {/* Tab Navigation - Only show if not creating a new time period */}
       {!isCreatingTimePeriod && (
         <div className="tab-navigation">
           <button 
@@ -439,45 +437,63 @@ const TimePeriodManagement = () => {
         </div>
       )}
       
-      {/* Time Period Form (Details Tab) */}
+      {/* Time Period Form (Only enable editing for new time periods) */}
       {(isCreatingTimePeriod || activeTab === 'details') && (
         <div className="section">
           <h2>Time Period Details</h2>
           
           {timePeriodError && <div className="form-error">{timePeriodError}</div>}
           
-          <form onSubmit={handleTimePeriodSubmit} className="form time-period-form">
-            <div className="form-group">
-              <label htmlFor="name">Time Period Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={timePeriodData.name}
-                onChange={handleTimePeriodInputChange}
-                placeholder="e.g., January 2025"
-                required
-              />
+          {isCreatingTimePeriod ? (
+            /* Form for creating new time period */
+            <form onSubmit={handleTimePeriodSubmit} className="form time-period-form">
+              <div className="form-group">
+                <label htmlFor="name">Time Period Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={timePeriodData.name}
+                  onChange={handleTimePeriodInputChange}
+                  placeholder="e.g., January 2025"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="type">Time Period Type</label>
+                <select
+                  id="type"
+                  name="type"
+                  value={timePeriodData.type}
+                  onChange={handleTimePeriodInputChange}
+                >
+                  <option value="bi-monthly">Bi-Monthly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              
+              <button type="submit" className="submit-button">
+                Create Time Period
+              </button>
+            </form>
+          ) : (
+            /* View-only display for existing time period */
+            <div className="time-period-details">
+              <div className="detail-item">
+                <span className="label">Name:</span>
+                <span className="value">{timePeriodData.name}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">Type:</span>
+                <span className="value">{timePeriodData.type}</span>
+              </div>
+              <div className="note">
+                <p>Note: Time periods are shared resources and cannot be edited or deleted.</p>
+              </div>
             </div>
-            
-            <div className="form-group">
-              <label htmlFor="type">Time Period Type</label>
-              <select
-                id="type"
-                name="type"
-                value={timePeriodData.type}
-                onChange={handleTimePeriodInputChange}
-              >
-                <option value="bi-monthly">Bi-Monthly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-            
-            <button type="submit" className="submit-button">
-              {isCreatingTimePeriod ? 'Create Time Period' : 'Update Time Period'}
-            </button>
-          </form>
+          )}
         </div>
       )}
       

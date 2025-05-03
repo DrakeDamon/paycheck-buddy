@@ -1,3 +1,4 @@
+// src/pages/TimePeriods.js
 import React, { useState, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
@@ -7,8 +8,7 @@ const TimePeriods = () => {
   const { 
     timePeriods, 
     loading, 
-    error, 
-    deleteTimePeriod,
+    error,
     calculateTimePeriodBalance,
     getExpensesByTimePeriod,
     getPaychecksByTimePeriod
@@ -18,12 +18,6 @@ const TimePeriods = () => {
   const [filterType, setFilterType] = useState('all');
   const [sortColumn, setSortColumn] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this time period? This will also delete all associated expenses and paychecks.')) {
-      await deleteTimePeriod(id);
-    }
-  };
 
   const handleSort = (column) => {
     if (sortColumn === column) {
@@ -67,8 +61,8 @@ const TimePeriods = () => {
       aValue = a.expenseCount;
       bValue = b.expenseCount;
     } else {
-      aValue = a[sortColumn].toLowerCase();
-      bValue = b[sortColumn].toLowerCase();
+      aValue = a[sortColumn]?.toLowerCase();
+      bValue = b[sortColumn]?.toLowerCase();
     }
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
@@ -150,8 +144,8 @@ const TimePeriods = () => {
                   <td>{period.paycheckCount}</td>
                   <td>{period.expenseCount}</td>
                   <td className="actions">
-                    <Link to={`/time-periods/${period.id}`} className="action-button edit" title="Edit Time Period">
-                      Edit
+                    <Link to={`/time-periods/${period.id}`} className="action-button view" title="View Time Period">
+                      View
                     </Link>
                     <Link to={`/time-periods/${period.id}/paychecks`} className="action-button paycheck" title="Manage Paychecks">
                       P
@@ -159,9 +153,6 @@ const TimePeriods = () => {
                     <Link to={`/time-periods/${period.id}/expenses`} className="action-button expense" title="Manage Expenses">
                       E
                     </Link>
-                    <button className="action-button delete" onClick={() => handleDelete(period.id)} title="Delete Time Period">
-                      D
-                    </button>
                   </td>
                 </tr>
               ))}

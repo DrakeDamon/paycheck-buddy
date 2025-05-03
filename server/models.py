@@ -47,8 +47,8 @@ class TimePeriod(db.Model):
     paychecks = db.relationship('Paycheck', back_populates='time_period', cascade='all, delete-orphan')
     
     # Association proxies
-    users_via_expenses = association_proxy('expenses', 'user')
-    users_via_paychecks = association_proxy('paychecks', 'user')
+    # users_via_expenses = association_proxy('expenses', 'user')
+    # users_via_paychecks = association_proxy('paychecks', 'user')
     
     def __repr__(self):
         return f'<TimePeriod {self.name}>'

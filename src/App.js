@@ -20,12 +20,10 @@ import TimePeriodManagement from './components/TimePeriodManagement';
 const ProtectedLayout = () => {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
-  // Show loading state while checking authentication
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }

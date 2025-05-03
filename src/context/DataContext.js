@@ -1,3 +1,4 @@
+// src/context/DataContext.js
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { AuthContext } from './AuthContext';
@@ -14,11 +15,11 @@ export const DataProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [dataLoaded, setDataLoaded] = useState(false);
   
-  // Add filter states
+  // Filter states
   const [filterTimePeriodType, setFilterTimePeriodType] = useState('All');
-  const [filterTimePeriod, setFilterTimePeriod] = useState(null); // null represents 'All'
+  const [filterTimePeriod, setFilterTimePeriod] = useState(null);
 
-  // Load user data
+  // Load ALL user data in a single call
   const loadUserData = useCallback(async () => {
     if (!isAuthenticated || dataLoaded) return;
 
@@ -26,6 +27,7 @@ export const DataProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
+      // Single API call to get all data
       const response = await axios.get('/api/user_data');
       const userData = response.data;
 
@@ -33,7 +35,6 @@ export const DataProvider = ({ children }) => {
       setExpenses(userData.expenses || []);
       setPaychecks(userData.paychecks || []);
       setDataLoaded(true);
-
       setLoading(false);
     } catch (err) {
       setLoading(false);
@@ -46,6 +47,7 @@ export const DataProvider = ({ children }) => {
     if (isAuthenticated && !dataLoaded) {
       loadUserData();
     } else if (!isAuthenticated) {
+      // Reset state when logged out
       setTimePeriods([]);
       setExpenses([]);
       setPaychecks([]);
@@ -53,7 +55,7 @@ export const DataProvider = ({ children }) => {
     }
   }, [isAuthenticated, loadUserData, dataLoaded]);
 
-  // Time Period CRUD operations
+  // Time Period operations - USERS CAN ONLY CREATE, NOT EDIT OR DELETE
   const createTimePeriod = async (timePeriod) => {
     try {
       setLoading(true);
@@ -62,58 +64,16 @@ export const DataProvider = ({ children }) => {
       const response = await axios.post('/api/time_periods', timePeriod);
       const newTimePeriod = response.data;
 
-      setTimePeriods([...timePeriods, newTimePeriod]);
+      // Update local state
+      setTimePeriods(prevTimePeriods => [...prevTimePeriods, newTimePeriod]);
+      
       setLoading(false);
-
       return newTimePeriod;
     } catch (err) {
       setLoading(false);
       setError(err.response?.data?.error || 'Failed to create time period');
       console.error('Error creating time period:', err);
       return null;
-    }
-  };
-
-  const updateTimePeriod = async (id, updates) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await axios.put(`/api/time_periods/${id}`, updates);
-      const updatedTimePeriod = response.data;
-
-      setTimePeriods(timePeriods.map(period =>
-        period.id === id ? updatedTimePeriod : period
-      ));
-
-      setLoading(false);
-      return updatedTimePeriod;
-    } catch (err) {
-      setLoading(false);
-      setError(err.response?.data?.error || 'Failed to update time period');
-      console.error('Error updating time period:', err);
-      return null;
-    }
-  };
-
-  const deleteTimePeriod = async (id) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      await axios.delete(`/api/time_periods/${id}`);
-
-      setTimePeriods(timePeriods.filter(period => period.id !== id));
-      setExpenses(expenses.filter(expense => expense.time_period_id !== id));
-      setPaychecks(paychecks.filter(paycheck => paycheck.time_period_id !== id));
-
-      setLoading(false);
-      return true;
-    } catch (err) {
-      setLoading(false);
-      setError(err.response?.data?.error || 'Failed to delete time period');
-      console.error('Error deleting time period:', err);
-      return false;
     }
   };
 
@@ -126,9 +86,10 @@ export const DataProvider = ({ children }) => {
       const response = await axios.post(`/api/time_periods/${timePeriodId}/expenses`, expense);
       const newExpense = response.data;
 
-      setExpenses([...expenses, newExpense]);
+      // Update local state
+      setExpenses(prevExpenses => [...prevExpenses, newExpense]);
+      
       setLoading(false);
-
       return newExpense;
     } catch (err) {
       setLoading(false);
@@ -146,9 +107,10 @@ export const DataProvider = ({ children }) => {
       const response = await axios.put(`/api/time_periods/${timePeriodId}/expenses/${expenseId}`, updates);
       const updatedExpense = response.data;
 
-      setExpenses(expenses.map(expense =>
-        expense.id === expenseId ? updatedExpense : expense
-      ));
+      // Update local state
+      setExpenses(prevExpenses => 
+        prevExpenses.map(expense => expense.id === expenseId ? updatedExpense : expense)
+      );
 
       setLoading(false);
       return updatedExpense;
@@ -167,9 +129,10 @@ export const DataProvider = ({ children }) => {
 
       await axios.delete(`/api/time_periods/${timePeriodId}/expenses/${expenseId}`);
 
-      setExpenses(expenses.filter(expense => expense.id !== expenseId));
+      // Update local state
+      setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== expenseId));
+      
       setLoading(false);
-
       return true;
     } catch (err) {
       setLoading(false);
@@ -188,9 +151,10 @@ export const DataProvider = ({ children }) => {
       const response = await axios.post(`/api/time_periods/${timePeriodId}/paychecks`, paycheck);
       const newPaycheck = response.data;
 
-      setPaychecks([...paychecks, newPaycheck]);
+      // Update local state
+      setPaychecks(prevPaychecks => [...prevPaychecks, newPaycheck]);
+      
       setLoading(false);
-
       return newPaycheck;
     } catch (err) {
       setLoading(false);
@@ -208,9 +172,10 @@ export const DataProvider = ({ children }) => {
       const response = await axios.put(`/api/time_periods/${timePeriodId}/paychecks/${paycheckId}`, updates);
       const updatedPaycheck = response.data;
 
-      setPaychecks(paychecks.map(paycheck =>
-        paycheck.id === paycheckId ? updatedPaycheck : paycheck
-      ));
+      // Update local state
+      setPaychecks(prevPaychecks => 
+        prevPaychecks.map(paycheck => paycheck.id === paycheckId ? updatedPaycheck : paycheck)
+      );
 
       setLoading(false);
       return updatedPaycheck;
@@ -229,9 +194,10 @@ export const DataProvider = ({ children }) => {
 
       await axios.delete(`/api/time_periods/${timePeriodId}/paychecks/${paycheckId}`);
 
-      setPaychecks(paychecks.filter(paycheck => paycheck.id !== paycheckId));
+      // Update local state
+      setPaychecks(prevPaychecks => prevPaychecks.filter(paycheck => paycheck.id !== paycheckId));
+      
       setLoading(false);
-
       return true;
     } catch (err) {
       setLoading(false);
@@ -264,12 +230,12 @@ export const DataProvider = ({ children }) => {
     };
   }, [getExpensesByTimePeriod, getPaychecksByTimePeriod]);
 
-  // Filtering logic with useMemo for dynamic updates
+  // Filtered data using useMemo
   const filteredExpenses = useMemo(() => {
     if (filterTimePeriod !== null) {
       return expenses.filter(expense => expense.time_period_id === filterTimePeriod);
     } else if (filterTimePeriodType !== 'All') {
-      const periodsOfType = timePeriods.filter(period => period.type === filterTimePeriodType);
+      const periodsOfType = timePeriods.filter(period => period.type === filterTimePeriodType.toLowerCase());
       const periodIds = periodsOfType.map(period => period.id);
       return expenses.filter(expense => periodIds.includes(expense.time_period_id));
     } else {
@@ -281,7 +247,7 @@ export const DataProvider = ({ children }) => {
     if (filterTimePeriod !== null) {
       return paychecks.filter(paycheck => paycheck.time_period_id === filterTimePeriod);
     } else if (filterTimePeriodType !== 'All') {
-      const periodsOfType = timePeriods.filter(period => period.type === filterTimePeriodType);
+      const periodsOfType = timePeriods.filter(period => period.type === filterTimePeriodType.toLowerCase());
       const periodIds = periodsOfType.map(period => period.id);
       return paychecks.filter(paycheck => periodIds.includes(paycheck.time_period_id));
     } else {
@@ -289,13 +255,13 @@ export const DataProvider = ({ children }) => {
     }
   }, [paychecks, timePeriods, filterTimePeriodType, filterTimePeriod]);
 
-  // Reset filters function
+  // Reset filters
   const resetFilters = () => {
     setFilterTimePeriodType('All');
     setFilterTimePeriod(null);
   };
 
-  // Updated context value
+  // Context value
   const value = {
     timePeriods,
     expenses,
@@ -304,8 +270,7 @@ export const DataProvider = ({ children }) => {
     error,
     loadUserData,
     createTimePeriod,
-    updateTimePeriod,
-    deleteTimePeriod,
+    // Removed updateTimePeriod and deleteTimePeriod as per the requirements
     createExpense,
     updateExpense,
     deleteExpense,

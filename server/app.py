@@ -23,7 +23,7 @@ def create_app(config_class=Config):
     
     api = Api(app)
     
-     # Home route to document available endpoints
+    # Home route to document available endpoints
     @app.route('/')
     def home():
         return jsonify({
@@ -33,33 +33,22 @@ def create_app(config_class=Config):
                 "POST /api/auth/login": "Login and get access token",
                 "POST /api/auth/refresh": "Refresh access token",
                 
-                # Time Period endpoints (central organizing principle)
-                "GET /api/time_periods": "Get all time periods for current user",
+                # Time Period endpoints (create only, no update/delete)
+                "GET /api/time_periods": "Get all time periods (shared resource)",
                 "POST /api/time_periods": "Create a new time period",
                 "GET /api/time_periods/:id": "Get a specific time period",
-                "PUT /api/time_periods/:id": "Update a time period",
-                "DELETE /api/time_periods/:id": "Delete a time period",
                 
-                # Expense endpoints through time periods
-                "GET /api/time_periods/:id/expenses": "Get all expenses for a time period",
+                # Expense endpoints through time periods - full CRUD
                 "POST /api/time_periods/:id/expenses": "Add an expense to a time period",
-                "GET /api/time_periods/:id/expenses/:expense_id": "Get specific expense in a time period",
                 "PUT /api/time_periods/:id/expenses/:expense_id": "Update specific expense in a time period",
                 "DELETE /api/time_periods/:id/expenses/:expense_id": "Delete specific expense in a time period",
-                "GET /api/time_periods/all/expenses": "Get all expenses across all time periods",
                 
-                # Paycheck endpoints through time periods
-                "GET /api/time_periods/:id/paychecks": "Get all paychecks for a time period",
+                # Paycheck endpoints through time periods - full CRUD
                 "POST /api/time_periods/:id/paychecks": "Add a paycheck to a time period",
-                "GET /api/time_periods/:id/paychecks/:paycheck_id": "Get specific paycheck in a time period",
                 "PUT /api/time_periods/:id/paychecks/:paycheck_id": "Update specific paycheck in a time period",
                 "DELETE /api/time_periods/:id/paychecks/:paycheck_id": "Delete specific paycheck in a time period",
-                "GET /api/time_periods/all/paychecks": "Get all paychecks across all time periods",
                 
-                # Summary endpoint
-                "GET /api/time_periods/:id/summary": "Get income vs. expenses summary for a time period",
-                
-                # User Data endpoint
+                # All user data in a single request
                 "GET /api/user_data": "Get all user data in a single request (efficient loading)"
             }
         })
@@ -139,27 +128,13 @@ def create_app(config_class=Config):
                 "access_token": access_token
             }, 200
     
-    # Time Period Resources
+    # Time Period Resources - Only create, no update/delete
     class TimePeriodListResource(Resource):
         @jwt_required()
         def get(self):
-            current_user_id = get_jwt_identity()
-            user = User.query.get_or_404(current_user_id)
-            
-            # Get time periods through association proxies
-            user_time_periods = set()
-            for expense in user.expenses:
-                user_time_periods.add(expense.time_period)
-            for paycheck in user.paychecks:
-                user_time_periods.add(paycheck.time_period)
-            
-            # If no time periods found, return system defined time periods
-            if not user_time_periods:
-                time_periods = TimePeriod.query.all()
-                if time_periods:
-                    return time_periods_schema.dump(time_periods), 200
-            
-            return time_periods_schema.dump(list(user_time_periods)), 200
+            # Get all time periods (shared resource)
+            time_periods = TimePeriod.query.all()
+            return time_periods_schema.dump(time_periods), 200
         
         @jwt_required()
         def post(self):
@@ -181,51 +156,19 @@ def create_app(config_class=Config):
         
         @jwt_required()
         def put(self, time_period_id):
-            time_period = TimePeriod.query.get_or_404(time_period_id)
-            data = request.get_json()
-            
-            try:
-                updated_time_period = time_period_schema.load(data, instance=time_period, partial=True)
-                db.session.commit()
-                return time_period_schema.dump(updated_time_period), 200
-            except ValidationError as err:
-                return {"error": err.messages}, 400
+            return {"error": "Time periods cannot be modified as they are shared resources"}, 403
         
         @jwt_required()
         def delete(self, time_period_id):
-            time_period = TimePeriod.query.get_or_404(time_period_id)
-            db.session.delete(time_period)
-            db.session.commit()
-            return '', 204
+            return {"error": "Time periods cannot be deleted as they are shared resources"}, 403
     
-    # Time Period Expenses Resources
+    # Time Period Expenses Resources - Full CRUD
     class TimePeriodExpenseCollectionResource(Resource):
-        @jwt_required()
-        def get(self, time_period_id):
-            current_user_id = get_jwt_identity()
-            
-            # Handle special 'all' case to get expenses across all time periods
-            if time_period_id == 'all':
-                expenses = Expense.query.filter_by(user_id=current_user_id).all()
-                return expenses_schema.dump(expenses), 200
-            
-            # Get expenses for a specific time period - skip loading time_period object
-            expenses = Expense.query.filter_by(
-                user_id=current_user_id,
-                time_period_id=time_period_id
-            ).all()
-            
-            return expenses_schema.dump(expenses), 200
-        
         @jwt_required()
         def post(self, time_period_id):
             current_user_id = get_jwt_identity()
             
-            # Can't post to 'all'
-            if time_period_id == 'all':
-                return {"error": "Cannot create an expense without specifying a time period"}, 400
-            
-            # Verify time period exists (404 if not)
+            # Verify time period exists
             TimePeriod.query.get_or_404(time_period_id)
             
             data = request.get_json()
@@ -242,16 +185,6 @@ def create_app(config_class=Config):
     
     class TimePeriodExpenseDetailResource(Resource):
         @jwt_required()
-        def get(self, time_period_id, expense_id):
-            current_user_id = get_jwt_identity()
-            expense = Expense.query.filter_by(
-                id=expense_id,
-                time_period_id=time_period_id,
-                user_id=current_user_id
-            ).first_or_404()
-            return expense_schema.dump(expense), 200
-        
-        @jwt_required()
         def put(self, time_period_id, expense_id):
             current_user_id = get_jwt_identity()
             expense = Expense.query.filter_by(
@@ -262,6 +195,12 @@ def create_app(config_class=Config):
             data = request.get_json()
             
             try:
+                # Only update allowed fields
+                if 'user_id' in data:
+                    del data['user_id']  # Cannot change user_id
+                if 'time_period_id' in data:
+                    del data['time_period_id']  # Cannot change time_period_id
+                
                 updated_expense = expense_schema.load(data, instance=expense, partial=True)
                 db.session.commit()
                 return expense_schema.dump(updated_expense), 200
@@ -280,34 +219,13 @@ def create_app(config_class=Config):
             db.session.commit()
             return '', 204
     
-    # Time Period Paychecks Resources
+    # Time Period Paychecks Resources - Full CRUD
     class TimePeriodPaycheckCollectionResource(Resource):
-        @jwt_required()
-        def get(self, time_period_id):
-            current_user_id = get_jwt_identity()
-            
-            # Handle special 'all' case to get paychecks across all time periods
-            if time_period_id == 'all':
-                paychecks = Paycheck.query.filter_by(user_id=current_user_id).all()
-                return paychecks_schema.dump(paychecks), 200
-            
-            # Get paychecks for a specific time period - skip loading time_period object
-            paychecks = Paycheck.query.filter_by(
-                user_id=current_user_id,
-                time_period_id=time_period_id
-            ).all()
-            
-            return paychecks_schema.dump(paychecks), 200
-        
         @jwt_required()
         def post(self, time_period_id):
             current_user_id = get_jwt_identity()
             
-            # Can't post to 'all'
-            if time_period_id == 'all':
-                return {"error": "Cannot create a paycheck without specifying a time period"}, 400
-            
-            # Verify time period exists (404 if not)
+            # Verify time period exists
             TimePeriod.query.get_or_404(time_period_id)
             
             data = request.get_json()
@@ -324,16 +242,6 @@ def create_app(config_class=Config):
     
     class TimePeriodPaycheckDetailResource(Resource):
         @jwt_required()
-        def get(self, time_period_id, paycheck_id):
-            current_user_id = get_jwt_identity()
-            paycheck = Paycheck.query.filter_by(
-                id=paycheck_id,
-                time_period_id=time_period_id,
-                user_id=current_user_id
-            ).first_or_404()
-            return paycheck_schema.dump(paycheck), 200
-        
-        @jwt_required()
         def put(self, time_period_id, paycheck_id):
             current_user_id = get_jwt_identity()
             paycheck = Paycheck.query.filter_by(
@@ -344,6 +252,12 @@ def create_app(config_class=Config):
             data = request.get_json()
             
             try:
+                # Only update allowed fields
+                if 'user_id' in data:
+                    del data['user_id']  # Cannot change user_id
+                if 'time_period_id' in data:
+                    del data['time_period_id']  # Cannot change time_period_id
+                
                 updated_paycheck = paycheck_schema.load(data, instance=paycheck, partial=True)
                 db.session.commit()
                 return paycheck_schema.dump(updated_paycheck), 200
@@ -362,67 +276,51 @@ def create_app(config_class=Config):
             db.session.commit()
             return '', 204
 
-    # Time Period Summary Resource
-    class TimePeriodSummaryResource(Resource):
-        @jwt_required()
-        def get(self, time_period_id):
-            current_user_id = get_jwt_identity()
-            
-            # Verify the time period exists
-            time_period = TimePeriod.query.get_or_404(time_period_id)
-            
-            # Get data for this time period and user
-            expenses = Expense.query.filter_by(
-                user_id=current_user_id,
-                time_period_id=time_period_id
-            ).all()
-            paychecks = Paycheck.query.filter_by(
-                user_id=current_user_id,
-                time_period_id=time_period_id
-            ).all()
-            
-            # Format response
-            result = {
-                "time_period": time_period_schema.dump(time_period),
-                "expenses": expenses_schema.dump(expenses),
-                "paychecks": paychecks_schema.dump(paychecks)
-            }
-            
-            return result, 200
-
-    # User Data Resource
+    # User Data Resource - Single efficient data loading
     class UserDataResource(Resource):
         @jwt_required()
         def get(self):
             current_user_id = get_jwt_identity()
             user = User.query.get_or_404(current_user_id)
-            return user_data_schema.dump(user), 200
+            
+            # Get all time periods (shared resource)
+            all_time_periods = TimePeriod.query.all()
+            
+            # Get user's expenses and paychecks
+            user_expenses = Expense.query.filter_by(user_id=current_user_id).all()
+            user_paychecks = Paycheck.query.filter_by(user_id=current_user_id).all()
+            
+            # Build response
+            response = {
+                "id": user.id,
+                "username": user.username,
+                "time_periods": time_periods_schema.dump(all_time_periods),
+                "expenses": expenses_schema.dump(user_expenses),
+                "paychecks": paychecks_schema.dump(user_paychecks)
+            }
+            
+            return response, 200
     
     # Register resources with the API
     api.add_resource(RegisterResource, '/api/auth/register')
     api.add_resource(LoginResource, '/api/auth/login')
     api.add_resource(TokenRefreshResource, '/api/auth/refresh')
     
-    # Time Periods
+    # Time Periods - Only create, no update/delete
     api.add_resource(TimePeriodListResource, '/api/time_periods')
     api.add_resource(TimePeriodDetailResource, '/api/time_periods/<int:time_period_id>')
     
-    # Expense resources
+    # Expense resources - Full CRUD
     api.add_resource(TimePeriodExpenseCollectionResource, 
-                     '/api/time_periods/<int:time_period_id>/expenses',
-                     '/api/time_periods/<string:time_period_id>/expenses')
+                     '/api/time_periods/<int:time_period_id>/expenses')
     api.add_resource(TimePeriodExpenseDetailResource, 
                      '/api/time_periods/<int:time_period_id>/expenses/<int:expense_id>')
     
-    # Paycheck resources
+    # Paycheck resources - Full CRUD
     api.add_resource(TimePeriodPaycheckCollectionResource, 
-                    '/api/time_periods/<int:time_period_id>/paychecks',
-                    '/api/time_periods/<string:time_period_id>/paychecks')
+                    '/api/time_periods/<int:time_period_id>/paychecks')
     api.add_resource(TimePeriodPaycheckDetailResource, 
                     '/api/time_periods/<int:time_period_id>/paychecks/<int:paycheck_id>')
-    
-    # Summary route
-    api.add_resource(TimePeriodSummaryResource, '/api/time_periods/<int:time_period_id>/summary')
     
     # Single API endpoint for efficient data loading
     api.add_resource(UserDataResource, '/api/user_data')
