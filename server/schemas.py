@@ -29,12 +29,11 @@ class TimePeriodSchema(ma.SQLAlchemySchema):
         load_instance = True
     
     id = ma.auto_field(dump_only=True)
-    name = ma.auto_field(required=True)
     type = ma.auto_field(required=True)
     
     @validates('type')
     def validate_type(self, value):
-        valid_types = ['bi-monthly', 'monthly', 'yearly']
+        valid_types = ['bi-weekly', 'monthly', 'yearly']
         if value not in valid_types:
             raise ValidationError(f"Type must be one of: {', '.join(valid_types)}")
 
