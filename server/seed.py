@@ -22,13 +22,11 @@ def seed_database():
         db.session.add_all([user1, user2])
         db.session.commit()
         
-        # Create time periods
-        bi_monthly_1 = TimePeriod(name="January 1-15, 2025", type="bi-monthly")
-        bi_monthly_2 = TimePeriod(name="January 16-31, 2025", type="bi-monthly")
-        monthly_1 = TimePeriod(name="January 2025", type="monthly")
-        yearly_1 = TimePeriod(name="2025", type="yearly")
-        
-        db.session.add_all([bi_monthly_1, bi_monthly_2, monthly_1, yearly_1])
+        bi_weekly = TimePeriod(type="bi-weekly")
+        monthly = TimePeriod(type="monthly")
+        yearly = TimePeriod(type="yearly")
+
+        db.session.add_all([bi_weekly, monthly, yearly])
         db.session.commit()
         
         # Create expenses for user1

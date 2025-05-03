@@ -1,4 +1,3 @@
-// src/pages/TimePeriods.js
 import React, { useState, useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DataContext } from '../context/DataContext';
@@ -16,7 +15,7 @@ const TimePeriods = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [sortColumn, setSortColumn] = useState('name');
+  const [sortColumn, setSortColumn] = useState('type');
   const [sortDirection, setSortDirection] = useState('asc');
 
   const handleSort = (column) => {
@@ -38,9 +37,11 @@ const TimePeriods = () => {
   }, [timePeriods, calculateTimePeriodBalance, getExpensesByTimePeriod, getPaychecksByTimePeriod]);
 
   const filteredData = timePeriodData.filter(period => {
-    const nameMatch = period.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const typeMatch = filterType === 'all' || period.type === filterType;
-    return nameMatch && typeMatch;
+    // Safely handle potential undefined values
+    const periodType = period.type || '';
+    const searchMatch = period.type ? period.type.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+    const typeMatch = filterType === 'all' || periodType === filterType;
+    return searchMatch && typeMatch;
   });
 
   const sortedData = [...filteredData].sort((a, b) => {
@@ -61,9 +62,11 @@ const TimePeriods = () => {
       aValue = a.expenseCount;
       bValue = b.expenseCount;
     } else {
-      aValue = a[sortColumn]?.toLowerCase();
-      bValue = b[sortColumn]?.toLowerCase();
+      // Safely handle potential undefined values
+      aValue = (a[sortColumn] || '').toString().toLowerCase();
+      bValue = (b[sortColumn] || '').toString().toLowerCase();
     }
+    
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;
@@ -91,21 +94,18 @@ const TimePeriods = () => {
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Search by name"
+              placeholder="Search by type"
             />
             <select value={filterType} onChange={e => setFilterType(e.target.value)}>
               <option value="all">All Types</option>
               <option value="monthly">Monthly</option>
-              <option value="bi-monthly">Bi-Monthly</option>
+              <option value="bi-weekly">Bi-Weekly</option>
               <option value="yearly">Yearly</option>
             </select>
           </div>
           <table>
             <thead>
               <tr>
-                <th onClick={() => handleSort('name')}>
-                  Name {sortColumn === 'name' && (sortDirection === 'asc' ? '▲' : '▼')}
-                </th>
                 <th onClick={() => handleSort('type')}>
                   Type {sortColumn === 'type' && (sortDirection === 'asc' ? '▲' : '▼')}
                 </th>
@@ -131,11 +131,10 @@ const TimePeriods = () => {
               {sortedData.map(period => (
                 <tr key={period.id}>
                   <td>
-                    <Link to={`/time-periods/${period.id}`} className="period-name-link">
-                      {period.name}
+                    <Link to={`/time-periods/${period.id}`} className="period-type-link">
+                      {period.type}
                     </Link>
                   </td>
-                  <td>{period.type}</td>
                   <td>${period.balance.income.toFixed(2)}</td>
                   <td>${period.balance.expenses.toFixed(2)}</td>
                   <td className={period.balance.balance >= 0 ? 'positive' : 'negative'}>
@@ -171,9 +170,8 @@ const TimePeriods = () => {
       <div className="info-box">
         <h3>How PaycheckBuddy Works</h3>
         <p>
-          First, create time periods that match your financial cycles (bi-monthly, monthly, yearly). 
-          Time periods should match your income cycle. Name them according to when you receive paychecks.
-          Then add your paychecks and expenses to each time period to see if your income covers your expenses.
+          First, select a time period that matches your financial cycle (bi-weekly, monthly, yearly).
+          Then add your paychecks and expenses to that time period to see if your income covers your expenses.
         </p>
       </div>
     </div>
