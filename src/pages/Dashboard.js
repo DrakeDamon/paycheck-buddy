@@ -40,7 +40,7 @@ const Dashboard = () => {
   const [summaryData, setSummaryData] = useState([]);
   const [chartTimeframe, setChartTimeframe] = useState('all');
   
-  //Recalculate financial summaries whenever any of the data it depends on changes.  
+  // Recalculate financial summaries whenever any of the data it depends on changes.
   useEffect(() => {
     if (timePeriods.length > 0 && !loading) {
       // Get summary data for each time period
@@ -48,8 +48,7 @@ const Dashboard = () => {
         const { income, expenses, balance } = calculateTimePeriodBalance(period.id);
         return {
           id: period.id,
-          name: period.name,
-          type: period.type,
+          type: period.type || 'undefined',
           income,
           expenses,
           balance,
@@ -62,15 +61,15 @@ const Dashboard = () => {
     }
   }, [timePeriods, expenses, paychecks, loading, calculateTimePeriodBalance, getExpensesByTimePeriod, getPaychecksByTimePeriod]);
 
-  // Prepare chart data 
+  // Prepare chart data
   const getChartData = () => {
-    // Filter data once based on timeframe
-    const filteredData = summaryData
-      .filter(item => chartTimeframe === 'all' || item.type === chartTimeframe)
-      .slice(0, 6);
+    // Filter data based on timeframe
+    const filteredData = chartTimeframe === 'all' 
+      ? summaryData 
+      : summaryData.filter(item => item.type === chartTimeframe);
     
     return {
-      labels: filteredData.map(item => item.name),
+      labels: filteredData.map(item => `${item.type} (ID: ${item.id})`),
       datasets: [
         {
           label: 'Income',
@@ -119,6 +118,9 @@ const Dashboard = () => {
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const overallBalance = totalIncome - totalExpenses;
   
+  // Get unique time period types for filter buttons
+  const uniqueTimeFrames = [...new Set(timePeriods.map(period => period.type))].filter(Boolean);
+  
   if (loading) {
     return <div className="loading">Loading dashboard data...</div>;
   }
@@ -134,9 +136,7 @@ const Dashboard = () => {
         <p>Here's an overview of your finances</p>
       </header>
       
-
-      
-      <div className="dashboard-chart-container">
+      <div className="dashboard-charts">
         <div className="chart-container">
           <div className="chart-header">
             <h2>Income vs Expenses</h2>
@@ -147,24 +147,15 @@ const Dashboard = () => {
               >
                 All
               </button>
-              <button 
-                onClick={() => setChartTimeframe('monthly')} 
-                className={chartTimeframe === 'monthly' ? 'active' : ''}
-              >
-                Monthly
-              </button>
-              <button 
-                onClick={() => setChartTimeframe('bi-monthly')} 
-                className={chartTimeframe === 'bi-monthly' ? 'active' : ''}
-              >
-                Bi-Monthly
-              </button>
-              <button 
-                onClick={() => setChartTimeframe('yearly')} 
-                className={chartTimeframe === 'yearly' ? 'active' : ''}
-              >
-                Yearly
-              </button>
+              {uniqueTimeFrames.map(type => (
+                <button 
+                  key={type}
+                  onClick={() => setChartTimeframe(type)} 
+                  className={chartTimeframe === type ? 'active' : ''}
+                >
+                  {type}
+                </button>
+              ))}
             </div>
           </div>
           {timePeriods.length > 0 ? (
@@ -189,7 +180,7 @@ const Dashboard = () => {
             {summaryData.map(period => (
               <div key={period.id} className="time-period-card">
                 <div className="card-header">
-                  <h3>{period.name}</h3>
+                  <h3>Time Period {period.id}</h3>
                   <span className="period-type">{period.type}</span>
                 </div>
                 <div className="card-body">
