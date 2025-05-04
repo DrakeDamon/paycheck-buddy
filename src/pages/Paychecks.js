@@ -17,7 +17,7 @@ const Paychecks = () => {
   } = useContext(DataContext);
   
   const [filteredPaychecks, setFilteredPaychecks] = useState([]);
-  const [filterTimePeriod, setFilterTimePeriod] = useState('all'); // New filter state
+  const [filterTimePeriod, setFilterTimePeriod] = useState('all'); // Filter state
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
@@ -26,6 +26,17 @@ const Paychecks = () => {
   });
   const [formError, setFormError] = useState('');
   const [currentTimePeriod, setCurrentTimePeriod] = useState(null);
+  
+  // Function to get unique time period types for dropdown
+  const getUniqueTimePeriodTypes = () => {
+    const types = new Set();
+    timePeriods.forEach(period => {
+      if (period.type) {
+        types.add(period.type);
+      }
+    });
+    return Array.from(types);
+  };
   
   // Get current time period if id is provided
   useEffect(() => {
@@ -117,9 +128,8 @@ const Paychecks = () => {
         <div className="header-content">
           {id ? (
             <>
-              <h1>Paychecks for: {currentTimePeriod?.name || 'Unknown Time Period'}</h1>
+              <h1>Paychecks for: {currentTimePeriod?.type || 'Unknown Time Period'}</h1>
               <div className="header-actions">
-
                 <Link to="/paychecks" className="secondary-button">
                   All Paychecks
                 </Link>
@@ -185,6 +195,7 @@ const Paychecks = () => {
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
+                  className="select-dropdown"
                 >
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
@@ -210,11 +221,12 @@ const Paychecks = () => {
               id="timePeriodFilter"
               value={filterTimePeriod}
               onChange={(e) => setFilterTimePeriod(e.target.value)}
+              className="select-dropdown"
             >
               <option value="all">All Paychecks</option>
               {timePeriods.map(period => (
                 <option key={period.id} value={period.id}>
-                  {period.name}
+                  {period.type}
                 </option>
               ))}
             </select>
@@ -249,7 +261,7 @@ const Paychecks = () => {
             <tbody>
               {filteredPaychecks.map(paycheck => {
                 const timePeriod = timePeriods.find(period => period.id === paycheck.time_period_id);
-                const timePeriodName = timePeriod ? timePeriod.name : 'Unknown';
+                const timePeriodType = timePeriod ? timePeriod.type : 'Unknown';
                 return (
                   <tr key={paycheck.id}>
                     <td className="amount">
@@ -264,7 +276,7 @@ const Paychecks = () => {
                     {!id && (
                       <td>
                         <Link to={`/time-periods/${paycheck.time_period_id}/paychecks`}>
-                          {timePeriodName}
+                          {timePeriodType}
                         </Link>
                       </td>
                     )}

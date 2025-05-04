@@ -31,6 +31,17 @@ const Expenses = () => {
   const [formError, setFormError] = useState('');
   const [currentTimePeriod, setCurrentTimePeriod] = useState(null);
   
+  // Function to get unique time period types for dropdown
+  const getUniqueTimePeriodTypes = () => {
+    const types = new Set();
+    timePeriods.forEach(period => {
+      if (period.type) {
+        types.add(period.type);
+      }
+    });
+    return Array.from(types);
+  };
+  
   // Get current time period if id is provided
   useEffect(() => {
     if (id && timePeriods.length > 0) {
@@ -126,9 +137,8 @@ const Expenses = () => {
         <div className="header-content">
           {id ? (
             <>
-              <h1>Expenses for: {currentTimePeriod?.name || 'Unknown Time Period'}</h1>
+              <h1>Expenses for: {currentTimePeriod?.type || 'Unknown Time Period'}</h1>
               <div className="header-actions">
-
                 <Link to="/expenses" className="secondary-button">
                   All Expenses
                 </Link>
@@ -207,6 +217,7 @@ const Expenses = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
+                  className="select-dropdown"
                 >
                   <option value="">Select a category</option>
                   <option value="Housing">Housing</option>
@@ -232,6 +243,7 @@ const Expenses = () => {
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
+                  className="select-dropdown"
                 >
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>
@@ -261,6 +273,7 @@ const Expenses = () => {
                     name="recurrence_interval"
                     value={formData.recurrence_interval}
                     onChange={handleInputChange}
+                    className="select-dropdown"
                   >
                     <option value="">Select interval</option>
                     <option value="weekly">Weekly</option>
@@ -288,11 +301,12 @@ const Expenses = () => {
               id="timePeriodFilter"
               value={filterTimePeriod}
               onChange={(e) => setFilterTimePeriod(e.target.value)}
+              className="select-dropdown"
             >
               <option value="all">All Expenses</option>
               {timePeriods.map(period => (
                 <option key={period.id} value={period.id}>
-                  {period.name}
+                  {period.type}
                 </option>
               ))}
             </select>
@@ -329,7 +343,7 @@ const Expenses = () => {
             <tbody>
               {filteredExpenses.map(expense => {
                 const timePeriod = timePeriods.find(period => period.id === expense.time_period_id);
-                const timePeriodName = timePeriod ? timePeriod.name : 'Unknown';
+                const timePeriodType = timePeriod ? timePeriod.type : 'Unknown';
                 return (
                   <tr key={expense.id}>
                     <td>{expense.description}</td>
@@ -346,7 +360,7 @@ const Expenses = () => {
                     {!id && (
                       <td>
                         <Link to={`/time-periods/${expense.time_period_id}/expenses`}>
-                          {timePeriodName}
+                          {timePeriodType}
                         </Link>
                       </td>
                     )}
