@@ -33,9 +33,12 @@ class TimePeriodSchema(ma.SQLAlchemySchema):
     
     @validates('type')
     def validate_type(self, value):
-        valid_types = ['bi-weekly', 'monthly', 'yearly']
-        if value not in valid_types:
-            raise ValidationError(f"Type must be one of: {', '.join(valid_types)}")
+        # Only validate that it's not empty and is a reasonable length
+        if not value or not isinstance(value, str):
+            raise ValidationError("Time period type must be a non-empty string")
+        if len(value) < 2 or len(value) > 50:
+            raise ValidationError("Time period type must be between 2 and 50 characters")
+        return value
 
 class ExpenseSchema(ma.SQLAlchemySchema):
     class Meta:

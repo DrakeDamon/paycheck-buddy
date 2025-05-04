@@ -76,6 +76,16 @@ const TimePeriods = () => {
     return <div className="loading">Loading time periods...</div>;
   }
 
+const getUniqueTimePeriodTypes = () => {
+    const types = new Set();
+    timePeriods.forEach(period => {
+      if (period.type) {
+        types.add(period.type);
+      }
+    });
+    return Array.from(types);
+  };
+
   return (
     <div className="time-periods-page">
       <header className="page-header">
@@ -96,11 +106,15 @@ const TimePeriods = () => {
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search by type"
             />
-            <select value={filterType} onChange={e => setFilterType(e.target.value)}>
+            <select 
+              value={filterType} 
+              onChange={e => setFilterType(e.target.value)}
+              className="select-dropdown"
+            >
               <option value="all">All Types</option>
-              <option value="monthly">Monthly</option>
-              <option value="bi-weekly">Bi-Weekly</option>
-              <option value="yearly">Yearly</option>
+              {getUniqueTimePeriodTypes().map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
             </select>
           </div>
           <table>

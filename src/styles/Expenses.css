@@ -82,8 +82,8 @@
   font-weight: 500;
 }
 
-.form-group input,
-.form-group select {
+/* Keep input styles, but move select styles to the shared .select-dropdown class */
+.form-group input {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #ddd;
@@ -92,8 +92,7 @@
   transition: border-color 0.2s;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-group input:focus {
   border-color: #3498db;
   outline: none;
 }
@@ -204,6 +203,32 @@
   padding: 3rem;
   font-size: 1.1rem;
   color: #7f8c8d;
+}
+
+/* Consolidated dropdown styling - this should be in a shared CSS file */
+.select-dropdown {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  color: #2c3e50;
+  background-color: white;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  appearance: menulist;
+  opacity: 1;
+  transition: border-color 0.2s;
+}
+
+.select-dropdown:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.select-dropdown option {
+  color: #2c3e50;
+  background-color: white;
 }
 
 @media (max-width: 768px) {

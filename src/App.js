@@ -1,11 +1,11 @@
 import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 
 // Layout
 import Layout from './components/Layout';
-
+import './styles/Dropdownstyle.css';
 // Auth Pages
 import Login from './Auth/Login';
 import Register from './Auth/Register';

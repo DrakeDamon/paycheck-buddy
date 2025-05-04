@@ -2,6 +2,34 @@ from app import create_app
 from models import db, User, TimePeriod, Expense, Paycheck
 from datetime import datetime, timedelta
 
+def create_base_time_periods():
+    # Check if time periods already exist
+    bi_weekly = TimePeriod.query.filter_by(type='bi-weekly').first()
+    monthly = TimePeriod.query.filter_by(type='monthly').first()
+    yearly = TimePeriod.query.filter_by(type='yearly').first()
+    
+    # Create them if they don't exist
+    if not bi_weekly:
+        bi_weekly = TimePeriod(type='bi-weekly')
+        db.session.add(bi_weekly)
+    
+    if not monthly:
+        monthly = TimePeriod(type='monthly')
+        db.session.add(monthly)
+    
+    if not yearly:
+        yearly = TimePeriod(type='yearly')
+        db.session.add(yearly)
+    
+    db.session.commit()
+    print("Base time periods created")
+    
+    return {
+        'bi-weekly': bi_weekly,
+        'monthly': monthly,
+        'yearly': yearly
+    }
+
 def seed_database():
     print("Seeding database...")
     
@@ -22,18 +50,17 @@ def seed_database():
         db.session.add_all([user1, user2])
         db.session.commit()
         
-        bi_weekly = TimePeriod(type="bi-weekly")
-        monthly = TimePeriod(type="monthly")
-        yearly = TimePeriod(type="yearly")
-
-        db.session.add_all([bi_weekly, monthly, yearly])
-        db.session.commit()
+        # Create base time periods
+        time_periods = create_base_time_periods()
+        bi_weekly = time_periods['bi-weekly']
+        monthly = time_periods['monthly']
+        yearly = time_periods['yearly']
         
         # Create expenses for user1
         expenses = [
             Expense(
                 user_id=user1.id,
-                time_period_id=bi_monthly_1.id,
+                time_period_id=bi_weekly.id,
                 description="Rent",
                 amount=1000.00,
                 due_date=datetime(2025, 1, 5).date(),
@@ -44,7 +71,7 @@ def seed_database():
             ),
             Expense(
                 user_id=user1.id,
-                time_period_id=bi_monthly_1.id,
+                time_period_id=bi_weekly.id,
                 description="Groceries",
                 amount=200.00,
                 due_date=datetime(2025, 1, 10).date(),
@@ -54,7 +81,7 @@ def seed_database():
             ),
             Expense(
                 user_id=user1.id,
-                time_period_id=bi_monthly_2.id,
+                time_period_id=bi_weekly.id,
                 description="Utilities",
                 amount=150.00,
                 due_date=datetime(2025, 1, 20).date(),
@@ -65,7 +92,7 @@ def seed_database():
             ),
             Expense(
                 user_id=user1.id,
-                time_period_id=monthly_1.id,
+                time_period_id=monthly.id,
                 description="Car Insurance",
                 amount=80.00,
                 due_date=datetime(2025, 1, 15).date(),
@@ -76,7 +103,7 @@ def seed_database():
             ),
             Expense(
                 user_id=user1.id,
-                time_period_id=yearly_1.id,
+                time_period_id=yearly.id,
                 description="Property Tax",
                 amount=2500.00,
                 due_date=datetime(2025, 4, 15).date(),
@@ -94,14 +121,14 @@ def seed_database():
         paychecks = [
             Paycheck(
                 user_id=user1.id,
-                time_period_id=bi_monthly_1.id,
+                time_period_id=bi_weekly.id,
                 amount=1500.00,
                 date_received=datetime(2025, 1, 1).date(),
                 currency="USD"
             ),
             Paycheck(
                 user_id=user1.id,
-                time_period_id=bi_monthly_2.id,
+                time_period_id=bi_weekly.id,
                 amount=1500.00,
                 date_received=datetime(2025, 1, 15).date(),
                 currency="USD"
@@ -115,7 +142,7 @@ def seed_database():
         expenses_user2 = [
             Expense(
                 user_id=user2.id,
-                time_period_id=monthly_1.id,
+                time_period_id=monthly.id,
                 description="Rent",
                 amount=800.00,
                 due_date=datetime(2025, 1, 1).date(),
@@ -126,7 +153,7 @@ def seed_database():
             ),
             Expense(
                 user_id=user2.id,
-                time_period_id=monthly_1.id,
+                time_period_id=monthly.id,
                 description="Streaming Services",
                 amount=50.00,
                 due_date=datetime(2025, 1, 15).date(),
@@ -142,7 +169,7 @@ def seed_database():
         
         paycheck_user2 = Paycheck(
             user_id=user2.id,
-            time_period_id=monthly_1.id,
+            time_period_id=monthly.id,
             amount=2000.00,
             date_received=datetime(2025, 1, 1).date(),
             currency="USD"

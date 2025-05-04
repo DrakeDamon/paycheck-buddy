@@ -26,7 +26,7 @@ const TimePeriodManagement = () => {
   } = useContext(DataContext);
   
   // States for time period
-  const [timePeriodData, setTimePeriodData] = useState({ name: '', type: 'monthly' });
+  const [timePeriodData, setTimePeriodData] = useState({ type: '' });
   const [timePeriodError, setTimePeriodError] = useState('');
   const [isCreatingTimePeriod, setIsCreatingTimePeriod] = useState(!id);
   
@@ -70,10 +70,14 @@ const TimePeriodManagement = () => {
   useEffect(() => {
     if (id) {
       const timePeriod = timePeriods.find(period => period.id === parseInt(id));
+      console.log("Found time period:", timePeriod); // Debug logging
+      
       if (timePeriod) {
+        // Ensure we're working with a string type
         setTimePeriodData({
-          name: timePeriod.name,
-          type: timePeriod.type
+          type: typeof timePeriod.type === 'object' 
+            ? JSON.stringify(timePeriod.type) 
+            : String(timePeriod.type || '')
         });
         setIsCreatingTimePeriod(false);
         
@@ -126,19 +130,30 @@ const TimePeriodManagement = () => {
     e.preventDefault();
     setTimePeriodError('');
     
-    if (!timePeriodData.name.trim()) {
-      setTimePeriodError('Name is required');
+    if (!timePeriodData.type.trim()) {
+      setTimePeriodError('Time period type is required');
+      return;
+    }
+    
+    // Optional: Add validation for minimum length, allowed characters, etc.
+    if (timePeriodData.type.length < 3) {
+      setTimePeriodError('Time period type must be at least 3 characters');
       return;
     }
     
     try {
-      if (isCreatingTimePeriod) {
-        const newTimePeriod = await createTimePeriod(timePeriodData);
+      console.log("Submitting time period:", timePeriodData); // Debug logging
+      const newTimePeriod = await createTimePeriod(timePeriodData);
+      console.log("Server response:", newTimePeriod); // Debug logging
+      
+      if (newTimePeriod && newTimePeriod.id) {
         navigate(`/time-periods/${newTimePeriod.id}`);
-      } 
-      // Removed the update case as users can't update time periods
+      } else {
+        setTimePeriodError('Failed to create time period');
+      }
     } catch (err) {
-      setTimePeriodError('Failed to create time period');
+      console.error("Error creating time period:", err);
+      setTimePeriodError('Error creating time period: ' + (err.response?.data?.error || err.message || 'Unknown error'));
     }
   };
   
@@ -199,6 +214,7 @@ const TimePeriodManagement = () => {
         balance: updatedSummary.balance
       });
     } catch (err) {
+      console.error('Error handling expense submission:', err);
       setExpenseError(editingExpenseId ? 'Failed to update expense' : 'Failed to create expense');
     }
   };
@@ -255,6 +271,7 @@ const TimePeriodManagement = () => {
         balance: updatedSummary.balance
       });
     } catch (err) {
+      console.error('Error handling paycheck submission:', err);
       setPaycheckError(editingPaycheckId ? 'Failed to update paycheck' : 'Failed to create paycheck');
     }
   };
@@ -384,10 +401,27 @@ const TimePeriodManagement = () => {
     return <div className="loading">Loading...</div>;
   }
 
+const getUniqueTimePeriodTypes = () => {
+    const types = new Set();
+    timePeriods.forEach(period => {
+      if (period.type) {
+        types.add(period.type);
+      }
+    });
+    return Array.from(types);
+  };
+
   return (
     <div className="time-period-management">
       <header className="page-header">
-        <h1>{isCreatingTimePeriod ? 'Create New Time Period' : `Time Period: ${timePeriodData.name}`}</h1>
+        <h1>
+          {isCreatingTimePeriod 
+            ? 'Create New Time Period' 
+            : `Time Period: ${typeof timePeriodData.type === 'object' 
+                ? JSON.stringify(timePeriodData.type) 
+                : String(timePeriodData.type || '')}`
+          }
+        </h1>     
         <Link to="/time-periods" className="back-button">
           Back to All Time Periods
         </Link>
@@ -445,21 +479,7 @@ const TimePeriodManagement = () => {
           {timePeriodError && <div className="form-error">{timePeriodError}</div>}
           
           {isCreatingTimePeriod ? (
-            /* Form for creating new time period */
             <form onSubmit={handleTimePeriodSubmit} className="form time-period-form">
-              <div className="form-group">
-                <label htmlFor="name">Time Period Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={timePeriodData.name}
-                  onChange={handleTimePeriodInputChange}
-                  placeholder="e.g., January 2025"
-                  required
-                />
-              </div>
-              
               <div className="form-group">
                 <label htmlFor="type">Time Period Type</label>
                 <select
@@ -467,11 +487,22 @@ const TimePeriodManagement = () => {
                   name="type"
                   value={timePeriodData.type}
                   onChange={handleTimePeriodInputChange}
+                  className="select-dropdown"
                 >
-                  <option value="bi-monthly">Bi-Monthly</option>
+                  <option value="">Select a type</option>
+                  {getUniqueTimePeriodTypes().map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                  <option value="bi-weekly">Bi-Weekly</option>
                   <option value="monthly">Monthly</option>
                   <option value="yearly">Yearly</option>
                 </select>
+              </div>
+              
+              <div className="form-info">
+                <p>Enter a time period type for your budget. Time periods are shared resources
+                that organize your expenses and paychecks based on your financial cycles.</p>
+                <p><strong>Common options:</strong> monthly, bi-weekly, yearly</p>
               </div>
               
               <button type="submit" className="submit-button">
@@ -482,12 +513,12 @@ const TimePeriodManagement = () => {
             /* View-only display for existing time period */
             <div className="time-period-details">
               <div className="detail-item">
-                <span className="label">Name:</span>
-                <span className="value">{timePeriodData.name}</span>
-              </div>
-              <div className="detail-item">
                 <span className="label">Type:</span>
-                <span className="value">{timePeriodData.type}</span>
+                <span className="value">
+                  {typeof timePeriodData.type === 'object' 
+                    ? JSON.stringify(timePeriodData.type) 
+                    : timePeriodData.type}
+                </span>
               </div>
               <div className="note">
                 <p>Note: Time periods are shared resources and cannot be edited or deleted.</p>
@@ -580,6 +611,7 @@ const TimePeriodManagement = () => {
                       name="category"
                       value={expenseData.category}
                       onChange={handleExpenseInputChange}
+                      className="select-dropdown"
                     >
                       <option value="">Select a category</option>
                       <option value="Housing">Housing</option>
@@ -604,6 +636,7 @@ const TimePeriodManagement = () => {
                       name="currency"
                       value={expenseData.currency}
                       onChange={handleExpenseInputChange}
+                      className="select-dropdown"
                     >
                       <option value="USD">USD</option>
                       <option value="EUR">EUR</option>
@@ -629,6 +662,7 @@ const TimePeriodManagement = () => {
                         name="recurrence_interval"
                         value={expenseData.recurrence_interval}
                         onChange={handleExpenseInputChange}
+                        className="select-dropdown"
                       >
                         <option value="">Select interval</option>
                         <option value="weekly">Weekly</option>
@@ -780,6 +814,7 @@ const TimePeriodManagement = () => {
                       name="currency"
                       value={paycheckData.currency}
                       onChange={handlePaycheckInputChange}
+                      className="select-dropdown"
                     >
                       <option value="USD">USD</option>
                       <option value="EUR">EUR</option>
