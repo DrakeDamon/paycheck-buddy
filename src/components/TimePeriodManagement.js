@@ -482,21 +482,15 @@ const getUniqueTimePeriodTypes = () => {
             <form onSubmit={handleTimePeriodSubmit} className="form time-period-form">
               <div className="form-group">
                 <label htmlFor="type">Time Period Type</label>
-                <select
+                <input
+                  type="text"
                   id="type"
                   name="type"
                   value={timePeriodData.type}
                   onChange={handleTimePeriodInputChange}
-                  className="select-dropdown"
-                >
-                  <option value="">Select a type</option>
-                  {getUniqueTimePeriodTypes().map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                  <option value="bi-weekly">Bi-Weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
+                  placeholder="e.g., monthly, bi-weekly, yearly"
+                  required
+                />
               </div>
               
               <div className="form-info">

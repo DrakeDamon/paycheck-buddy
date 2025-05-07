@@ -91,17 +91,13 @@ class UserDataSchema(ma.SQLAlchemySchema):
     id = ma.auto_field()
     username = ma.auto_field()
     
-    # Include only the current user's expenses
-    expenses = fields.List(fields.Nested(lambda: ExpenseSchema(exclude=('user_id',))))
-    
-    # Include only the current user's paychecks
+    expenses = fields.List(fields.Nested(lambda: ExpenseSchema(exclude=('user_id',))))  
     paychecks = fields.List(fields.Nested(lambda: PaycheckSchema(exclude=('user_id',))))
     
     # Include ALL time periods (shared resource)
     time_periods = fields.Method('get_all_time_periods')
     
     def get_all_time_periods(self, obj):
-        # Get all time periods from the database (shared resource)
         all_time_periods = TimePeriod.query.all()
         return TimePeriodSchema(many=True).dump(all_time_periods)
 

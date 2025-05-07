@@ -33,7 +33,7 @@ def create_app(config_class=Config):
                 "POST /api/auth/login": "Login and get access token",
                 "POST /api/auth/refresh": "Refresh access token",
                 
-                # Time Period endpoints (create only, no update/delete)
+                # Time Period endpoints 
                 "GET /api/time_periods": "Get all time periods (shared resource)",
                 "POST /api/time_periods": "Create a new time period",
                 "GET /api/time_periods/:id": "Get a specific time period",
@@ -283,14 +283,13 @@ def create_app(config_class=Config):
             current_user_id = get_jwt_identity()
             user = User.query.get_or_404(current_user_id)
             
-            # Get all time periods (shared resource)
             all_time_periods = TimePeriod.query.all()
             
             # Get user's expenses and paychecks
             user_expenses = Expense.query.filter_by(user_id=current_user_id).all()
             user_paychecks = Paycheck.query.filter_by(user_id=current_user_id).all()
             
-            # Build response
+            # Efficiently bundle all user financial information into one neat package
             response = {
                 "id": user.id,
                 "username": user.username,
