@@ -74,7 +74,7 @@ export const DataProvider = ({ children }) => {
     }
   }, [isAuthenticated, loadUserData, dataLoaded]);
 
-  // Time Period operations - USERS CAN ONLY CREATE, NOT EDIT OR DELETE
+  // Time Period operations 
   const createTimePeriod = async (timePeriod) => {
     const newTimePeriod = await apiRequest('post', '/api/time_periods', timePeriod);
     
@@ -197,7 +197,6 @@ export const DataProvider = ({ children }) => {
   const filteredPaychecks = useMemo(() => filterByTimePeriod(paychecks), 
     [paychecks, filterByTimePeriod]);
 
-  // Reset filters
   const resetFilters = () => {
     setFilterTimePeriodType('All');
     setFilterTimePeriod(null);
