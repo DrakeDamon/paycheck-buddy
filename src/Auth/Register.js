@@ -8,6 +8,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   
   const { register, error, isAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -23,12 +24,14 @@ const Register = () => {
   useEffect(() => {
     if (error) {
       setFormError(error);
+      setSuccessMessage('');
     }
   }, [error]);
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    setSuccessMessage('');
     
     // Form validation
     if (!username || !password || !confirmPassword) {
@@ -50,7 +53,11 @@ const Register = () => {
     const success = await register(username, password);
     
     if (success) {
-      navigate('/');
+      setSuccessMessage('Registration successful! Redirecting to dashboard...');
+      // Add a slight delay before redirecting to show the success message
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
     }
   };
   
@@ -65,6 +72,12 @@ const Register = () => {
         {formError && (
           <div className="auth-error">
             {formError}
+          </div>
+        )}
+        
+        {successMessage && (
+          <div className="auth-success">
+            {successMessage}
           </div>
         )}
         
