@@ -1,81 +1,73 @@
-# PaycheckBuddy Frontend
+# PaycheckBuddy
 
-This is the React frontend for the PaycheckBuddy application.
+A financial budgeting application that organizes finances by time periods rather than traditional monthly cycles.
 
 ## Features
 
 - User authentication (login/register)
-- View and manage time periods
+- Time period-based financial organization
 - Track expenses and paychecks
 - Visualize income vs expenses
 - Responsive design for all devices
 
 ## Tech Stack
 
-- React
-- React Router for navigation
-- Context API for state management
-- Axios for API calls
-- Chart.js for data visualization
-- Tailwind CSS for styling
+- **Frontend**: React, React Router, Context API, Chart.js
+- **Backend**: Flask, SQLAlchemy, Flask-JWT-Extended, Flask-Marshmallow
 
 ## Project Structure
 
-```
-src/
-├── components/         # Reusable UI components
-│   ├── auth/           # Authentication related components
-│   ├── dashboard/      # Dashboard components
-│   ├── expenses/       # Expense management components
-│   ├── paychecks/      # Paycheck management components
-│   ├── time-periods/   # Time period components
-│   └── ui/             # Shared UI components
-├── context/            # React Context for state management
-├── hooks/              # Custom React hooks
-├── pages/              # Page components
-├── services/           # API service functions
-├── utils/              # Utility functions
-├── App.js              # Main app component
-└── index.js            # Entry point
-```
+The project is organized into a client-server architecture:
+
+- `src/`: Frontend React components and logic
+- `server/`: Flask backend API and database models
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 14+ installed
-- PaycheckBuddy backend running
+- Python 3.7+ installed
+- pip package manager
 
-### Installation
+### Installation & Setup
 
-1. Install dependencies:
+1. Clone the repository:
+   git clone <repository-url>
+   cd paycheck-buddy
 
-   ```
+2. Install frontend dependencies:
    npm install
-   ```
 
-2. Start the development server:
+3. Start the backend server:
+   cd server
+   python app.py
 
-   ```
+4. In a new terminal, start the frontend development server:
    npm start
-   ```
 
-3. Build for production:
-   ```
-   npm run build
-   ```
+5. Open your browser and navigate to:
+   http://localhost:3000
 
-## Available Scripts
+## API Endpoints
 
-- `npm start`: Start the development server
-- `npm test`: Run tests
-- `npm run build`: Build for production
-- `npm run eject`: Eject from Create React App
+### Authentication
 
-## Development Guidelines
+- `POST /api/auth/register`: Register a new user
+- `POST /api/auth/login`: Login and get access token
+- `POST /api/auth/refresh`: Refresh access token
 
-- Follow the component structure outlined above
-- Use functional components with hooks
-- Use the Context API for state management
-- Use the API service functions for all backend communication
-- Follow the BEM methodology for CSS class naming
+### Time Periods
+
+- `GET /api/time_periods`: Get all time periods (shared resource)
+- `POST /api/time_periods`: Create a new time period
+- `GET /api/time_periods/:id`: Get a specific time period
+
+### Expenses & Paychecks
+
+- Full CRUD operations for both expenses and paychecks
+- Nested under time periods (e.g., `/api/time_periods/:id/expenses`)
+
+### User Data
+
+- `GET /api/user_data`: Get all user data in a single request (efficient loading)

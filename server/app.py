@@ -36,6 +36,8 @@ def create_app(config_class=Config):
                 # Time Period endpoints 
                 "GET /api/time_periods": "Get all time periods (shared resource)",
                 "POST /api/time_periods": "Create a new time period",
+                # TimePeriodDetailResource provides a complete RESTful API
+                # Frontend components should use context state rather than calling this endpoint directly
                 "GET /api/time_periods/:id": "Get a specific time period",
                 
                 # Expense endpoints through time periods - full CRUD
