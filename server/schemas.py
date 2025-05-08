@@ -1,3 +1,4 @@
+# server/schemas.py
 from flask_marshmallow import Marshmallow
 from marshmallow import fields, validates, ValidationError, post_load
 from models import User, TimePeriod, Expense, Paycheck, db
@@ -23,23 +24,6 @@ class UserSchema(ma.SQLAlchemySchema):
                 return user
         return data
 
-class TimePeriodSchema(ma.SQLAlchemySchema):
-    class Meta:
-        model = TimePeriod
-        load_instance = True
-    
-    id = ma.auto_field(dump_only=True)
-    type = ma.auto_field(required=True)
-    
-    @validates('type')
-    def validate_type(self, value):
-        # Only validate that it's not empty and is a reasonable length
-        if not value or not isinstance(value, str):
-            raise ValidationError("Time period type must be a non-empty string")
-        if len(value) < 2 or len(value) > 50:
-            raise ValidationError("Time period type must be between 2 and 50 characters")
-        return value
-
 class ExpenseSchema(ma.SQLAlchemySchema):
     class Meta:
         model = Expense
@@ -55,9 +39,6 @@ class ExpenseSchema(ma.SQLAlchemySchema):
     recurrence_interval = ma.auto_field()
     category = ma.auto_field()
     currency = ma.auto_field()
-    
-    # Add time_period relationship for nested serialization
-    time_period = fields.Nested(TimePeriodSchema, dump_only=True)
     
     @validates('amount')
     def validate_amount(self, value):
@@ -76,13 +57,31 @@ class PaycheckSchema(ma.SQLAlchemySchema):
     date_received = ma.auto_field()
     currency = ma.auto_field()
     
-    # Add time_period relationship for nested serialization
-    time_period = fields.Nested(TimePeriodSchema, dump_only=True)
-    
     @validates('amount')
     def validate_amount(self, value):
         if value <= 0:
             raise ValidationError("Amount must be greater than 0")
+
+class TimePeriodSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = TimePeriod
+        load_instance = True
+    
+    id = ma.auto_field(dump_only=True)
+    type = ma.auto_field(required=True)
+    
+    # Add nested fields for related expenses and paychecks
+    expenses = fields.List(fields.Nested(lambda: ExpenseSchema(exclude=('time_period_id',))), dump_only=True)
+    paychecks = fields.List(fields.Nested(lambda: PaycheckSchema(exclude=('time_period_id',))), dump_only=True)
+    
+    @validates('type')
+    def validate_type(self, value):
+        # Only validate that it's not empty and is a reasonable length
+        if not value or not isinstance(value, str):
+            raise ValidationError("Time period type must be a non-empty string")
+        if len(value) < 2 or len(value) > 50:
+            raise ValidationError("Time period type must be between 2 and 50 characters")
+        return value
 
 class UserDataSchema(ma.SQLAlchemySchema):
     class Meta:
@@ -91,15 +90,30 @@ class UserDataSchema(ma.SQLAlchemySchema):
     id = ma.auto_field()
     username = ma.auto_field()
     
-    expenses = fields.List(fields.Nested(lambda: ExpenseSchema(exclude=('user_id',))))  
-    paychecks = fields.List(fields.Nested(lambda: PaycheckSchema(exclude=('user_id',))))
+    # Include time periods with nested expenses and paychecks
+    time_periods = fields.Method('get_time_periods_with_data')
     
-    # Include ALL time periods (shared resource)
-    time_periods = fields.Method('get_all_time_periods')
-    
-    def get_all_time_periods(self, obj):
+    def get_time_periods_with_data(self, obj):
+        # Get all time periods
         all_time_periods = TimePeriod.query.all()
-        return TimePeriodSchema(many=True).dump(all_time_periods)
+        user_id = obj.id
+        
+        result = []
+        for period in all_time_periods:
+            # Get user's expenses and paychecks for this period
+            period_expenses = Expense.query.filter_by(user_id=user_id, time_period_id=period.id).all()
+            period_paychecks = Paycheck.query.filter_by(user_id=user_id, time_period_id=period.id).all()
+            
+            # Prepare period data with nested relationships
+            period_data = {
+                'id': period.id,
+                'type': period.type,
+                'expenses': ExpenseSchema(many=True, exclude=('time_period_id',)).dump(period_expenses),
+                'paychecks': PaycheckSchema(many=True, exclude=('time_period_id',)).dump(period_paychecks)
+            }
+            result.append(period_data)
+            
+        return result
 
 # Initialize schema instances
 user_schema = UserSchema()
